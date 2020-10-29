@@ -3,9 +3,9 @@ int plot_HCAL()
     TFile *f1 = new TFile("DoubleMuon_Run2018A_NANOAOD_plots.root");
     //TFile *f1 = new TFile("DoubleMuon_Run2018A_Run_315512_NANO_DLPHIN_plots.root");
 
-    bool plot_MET = true;
+    bool plot_MET = false;
     bool plot_METphi = false;
-    bool plot_resolution = false;
+    bool plot_resolution = true;
     bool plot_response = false;
 
     bool plot_2D = false;
@@ -145,24 +145,23 @@ int plot_HCAL()
 
             mycanvas->SaveAs("plots_temp/" + hist_name + "_profile.png");
 
-            int nBins = px->GetXaxis()->GetNbins();
-            auto SD_h = new TH1F(hist_name + "_SD_h", hist_name + "_SD_h", px->GetNbinsX(), px->GetXaxis()->GetXbins()->GetArray());
-            //TH1F* SD_h = (TH1F*)px->Clone(hist_name + "_SD_h");
-            //SD_h->Reset();
-            for(int i = 1; i<= nBins; i++)
+            TProfile* SD_h = (TProfile*)px->Clone(hist_name + "_SD_h");
+            SD_h->Reset();
+            for(int i = 1; i <= px->GetNbinsX(); i++)
             {
                 float error = px->GetBinError(i);
                 float center = px->GetBinContent(i);
                 float rel_error = 0;
                 if (center > 0) rel_error = error/center;
                 SD_h->SetBinContent(i, error);
-                //std::cout << i << ", " << error << ", " << center << ", " << SD_h->GetBinContent(i) << std::endl;
+                SD_h->SetBinEntries(i, 1);
+                //std::cout << i << ", " << SD_h->GetBinContent(i) << ", " << SD_h->GetBinError(i) << std::endl;
             }
             SD_h->GetXaxis()->SetRangeUser(xmin, xmax);
             if(set_SD_range)SD_h->GetYaxis()->SetRangeUser(SDmin, SDmax);
             SD_h->GetXaxis()->SetTitle(x_title);
             SD_h->GetYaxis()->SetTitle(y_title);
-            SD_h->Draw();
+            SD_h->Draw("hist");
             mycanvas->SaveAs("plots_temp/" + hist_name + "_SD.png");
         }
 

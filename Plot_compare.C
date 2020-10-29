@@ -2,9 +2,9 @@ int Plot_compare()
 {
     const bool plot_log = false;
     const bool shape_compare = true;
-    std::vector<TString> hist_list = {"MET_h", "MET_with_Z_h"};
+    std::vector<TString> hist_list = {"MET_h", "MET_with_Z_h", "METphi_with_Z_h"};
     std::vector<TString> hist2_list = hist_list;
-    hist2_list = {"CaloMET_h", "CaloMET_with_Z_h"};
+    hist2_list = {"CaloMET_h", "CaloMET_with_Z_h", "CaloMETphi_with_Z_h"};
     //hist2_list = {""};
 
     TString f1_name = "DoubleMuon_Run2018A_NANOAOD_plots";
