@@ -1,7 +1,7 @@
 int plot_HCAL()
 {
-    TFile *f1 = new TFile("DoubleMuon_Run2018A_NANOAOD_plots.root");
-    //TFile *f1 = new TFile("DoubleMuon_Run2018A_Run_315512_NANO_DLPHIN_plots.root");
+    //TFile *f1 = new TFile("results_temp/DoubleMuon_Run2018A_Run_315512_NANO_origin_recHit_plots.root");
+    TFile *f1 = new TFile("results_temp/DoubleMuon_Run2018A_Run_315512_nanoAOD_DLPHIN_energy_plots.root");
 
     bool plot_MET = false;
     bool plot_METphi = false;

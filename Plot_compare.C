@@ -2,18 +2,24 @@ int Plot_compare()
 {
     const bool plot_log = false;
     const bool shape_compare = true;
-    std::vector<TString> hist_list = {"MET_h", "MET_with_Z_h", "METphi_with_Z_h"};
+    std::vector<TString> hist_list =
+    {
+        //"CaloMET_h", "CaloMETBE_h",
+        //"CaloMET_phi_h", "CaloMETBE_phi_h",
+        //"myCaloMETBE_h", "myCaloMETBE_Muon_h",
+        "myCaloMETBE_phi_h", "myCaloMETBE_Muon_phi_h",
+    };
     std::vector<TString> hist2_list = hist_list;
-    hist2_list = {"CaloMET_h", "CaloMET_with_Z_h", "CaloMETphi_with_Z_h"};
-    //hist2_list = {""};
+    //hist2_list = {"CaloMET_h", "CaloMET_with_Z_h", "CaloMETphi_with_Z_h"};
 
-    TString f1_name = "DoubleMuon_Run2018A_NANOAOD_plots";
-    TString f1_lag = "PFMET";
+    TString f1_name = "DoubleMuon_Run2018A_Run_315512_RECO_origin_recHit_plots";
+    TString f1_lag = "origin RecHit";
     TString f1_folder = "";
     TString f2_name = f1_name;
-    TString f2_lag = "CaloMET";
+    f2_name = "DoubleMuon_Run2018A_Run_315512_RECO_DLPHIN_energy_plots";
+    TString f2_lag = "DLPHIN energy";
     TString f2_folder = "";
-    TString hist_folder = "plots/";
+    TString hist_folder = "myAna/";
 
     int rebin = 1; 
 
