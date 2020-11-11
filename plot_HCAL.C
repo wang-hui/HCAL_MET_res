@@ -1,12 +1,16 @@
 int plot_HCAL()
 {
     //TFile *f1 = new TFile("results_temp/DoubleMuon_Run2018A_Run_315512_NANO_origin_recHit_plots.root");
-    TFile *f1 = new TFile("results_temp/DoubleMuon_Run2018A_Run_315512_nanoAOD_DLPHIN_energy_plots.root");
+    //TFile *f1 = new TFile("results_temp/DoubleMuon_Run2018A_Run_315512_nanoAOD_DLPHIN_energy_plots.root");
+    TFile *f1 = new TFile("results_temp/DoubleMuon_Run2018A_Run_315512_RECO_origin_recHit_plots.root");
+    //TFile *f1 = new TFile("results_temp/DoubleMuon_Run2018A_Run_315512_RECO_DLPHIN_energy_plots.root");
 
     bool plot_MET = false;
     bool plot_METphi = false;
-    bool plot_resolution = true;
+    bool plot_resolution = false;
     bool plot_response = false;
+    bool plot_MET_vs_PU = true;
+    bool plot_METphi_vs_PU = false;
 
     bool plot_2D = false;
     bool plot_1D = false;
@@ -18,6 +22,8 @@ int plot_HCAL()
     {
         //"ZmumuCand_mass", "MET", 
     };
+
+    TString hist_dir = "plots/";
 
     TString x_title = "";
     TString y_title = "";
@@ -88,13 +94,51 @@ int plot_HCAL()
         y_title = "- Upara / Zpt";
     }
 
+    if(plot_MET_vs_PU)
+    {
+        hist_dir = "myAna/";
+
+        hist_list = 
+        {
+            "CaloMETBE_vs_PU", "myCaloMETBE_Muon_vs_PU"
+        };
+
+        plot_2D = true;
+        plot_log = true;
+
+        ymin = 0;
+        ymax = 60;
+
+        x_title = "PU";
+        y_title = "MET";
+    }
+
+    if(plot_METphi_vs_PU)
+    {
+        hist_dir = "myAna/";
+
+        hist_list = 
+        {
+            "CaloMETBE_phi_vs_PU", "myCaloMETBE_Muon_phi_vs_PU"
+        };
+
+        plot_2D = true;
+        plot_log = false;
+
+        //ymin = 0;
+        //ymax = 1.2;
+
+        x_title = "PU";
+        y_title = "MET phi";
+    }
+
     for(int i = 0; i < hist_list.size(); i++)
     {
         TString hist_name = hist_list.at(i);
 
         if(plot_2D)
         {
-            TString h1_name = "plots/" + hist_name + "_h";
+            TString h1_name = hist_dir + hist_name + "_h";
 
             TH2F *h1 = (TH2F*)f1->Get(h1_name);
 
@@ -107,11 +151,12 @@ int plot_HCAL()
             if(ymax == 999) ymax = h1->GetYaxis()->GetXmax();
 
             h1->Draw("colz");
+            //h1->Draw("surf3");
             //h1->SetTitle(h1_name);
             h1->GetXaxis()->SetTitle(x_title);
             h1->GetYaxis()->SetTitle(y_title);
             //h1->RebinX(10);
-            gPad->SetLogz();
+            if(plot_log) gPad->SetLogz();
 
             mycanvas->SetLeftMargin(0.15);
             mycanvas->SetRightMargin(0.15);
@@ -167,7 +212,7 @@ int plot_HCAL()
 
         if(plot_1D)
         {
-            TString h1_name = "plots/" + hist_name + "_h";
+            TString h1_name = hist_dir + hist_name + "_h";
             TH1F *h1 = (TH1F*)f1->Get(h1_name);
 
             TCanvas* mycanvas = new TCanvas("mycanvas", "mycanvas", 600, 600);
