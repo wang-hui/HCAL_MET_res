@@ -4,21 +4,35 @@ int Plot_compare()
     const bool shape_compare = true;
     std::vector<TString> hist_list =
     {
+        //"PU_h", "HT_h"
         //"CaloMET_h", "CaloMETBE_h",
         //"CaloMET_phi_h", "CaloMETBE_phi_h",
-        //"myCaloMETBE_h", "myCaloMETBE_Muon_h",
-        "myCaloMETBE_phi_h", "myCaloMETBE_Muon_phi_h",
+        //"myCaloMETBE_h", "myCaloMETBE1_h"
+        "myCaloMETBE_HB_h", "myCaloMETBE_HE_h"
+        //"myCaloMETBE_Muon_h", "myCaloMETBE1_Muon_h"
+        //"myCaloMETBE_phi_h", "myCaloMETBE1_phi_h"
+        //"myCaloMETBE_Muon_phi_h", "myCaloMETBE1_Muon_phi_h"
+        //"CaloMETBE20_phi_h",
+        //"myCaloETBE_h", "myCaloETBE1_h"
+        //"myCaloMETBE_HPU_h", "myCaloMETBE1_HPU_h"
+        //"myCaloMETBE_HHT_h", "myCaloMETBE1_HHT_h"
     };
     std::vector<TString> hist2_list = hist_list;
     //hist2_list = {"CaloMET_h", "CaloMET_with_Z_h", "CaloMETphi_with_Z_h"};
 
     TString f1_name = "DoubleMuon_Run2018A_Run_315512_RECO_origin_recHit_plots";
-    TString f1_lag = "origin RecHit";
-    TString f1_folder = "";
+    //f1_name = "2018_DYJetsToMuMu_M-50_RECO_origin_recHit_plots";
+    //f1_name = "2018_DYJetsToMuMu_M-50_RECO_DLPHIN_energy_plots";
+    TString f1_lag = "origin recHit";
+    TString f1_folder = "results_temp/";
+    f1_folder = "";
     TString f2_name = f1_name;
-    f2_name = "DoubleMuon_Run2018A_Run_315512_RECO_DLPHIN_energy_plots";
-    TString f2_lag = "DLPHIN energy";
-    TString f2_folder = "";
+    f2_name = "DoubleMuon_Run2018A_Run_315512_RECO_DLPHIN_no_SF_plots";
+    //f2_name = "2018_DYJetsToMuMu_M-50_RECO_DLPHIN_energy_plots";
+    //f2_name = "DoubleMuon_Run2018A_Run_315512_RECO_origin_recHit_plots_back";
+    //f2_name = "2018_DYJetsToMuMu_M-50_RECO_origin_recHit_plots";
+    TString f2_lag = "DLPHIN no SF";
+    TString f2_folder = f1_folder;
     TString hist_folder = "myAna/";
 
     int rebin = 1; 
