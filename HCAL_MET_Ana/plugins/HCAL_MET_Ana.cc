@@ -32,6 +32,7 @@ Implementation:
 #include "DataFormats/METReco/interface/CaloMET.h"
 #include "DataFormats/METReco/interface/GenMET.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 
@@ -72,22 +73,27 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
         virtual void endJob() override;
 
         std::vector<reco::Muon> sel_muons(std::vector<reco::Muon> Muons);
-        bool pass_z_sel(std::vector<reco::Muon> SelMuons);
+        std::vector<reco::GsfElectron> sel_electrons(std::vector<reco::GsfElectron> Electrons);
+        std::vector<math::XYZTLorentzVector> sel_z_mumu(std::vector<reco::Muon> SelMuons);
+        std::vector<math::XYZTLorentzVector> sel_z_ee(std::vector<reco::GsfElectron> SelElectrons);
         float calc_ht(std::vector<reco::PFJet> PFJets);
 
-        bool print_channel;
-        bool is_MC;
+        bool PrintChannel_;
+        bool IsMC_;
+        std::string RunMod_;
 
         edm::EDGetTokenT<HBHERecHitCollection> HBHERecHitsToken_;
         edm::EDGetTokenT<std::vector<reco::GenMET>> GenMETToken_;
         edm::EDGetTokenT<std::vector<reco::CaloMET>> CaloMETToken_;
         edm::EDGetTokenT<std::vector<reco::CaloMET>> CaloMETBEToken_;
         edm::EDGetTokenT<std::vector<reco::Muon>> MuonToken_;
+        edm::EDGetTokenT<std::vector<reco::GsfElectron>> ElectronToken_;
         edm::EDGetTokenT<std::vector<reco::PFJet>> PFJetToken_;
         edm::EDGetTokenT<std::vector<reco::Vertex>> VertexToken_;
 
         TH1F * BaselineTest_h;
         TH1F * PU_h, * HT_h;
+        TH1F * nAllEle_h, *nSelEle_h;
         TH1F * GenMET_h, * GenMET_phi_h;
         TH1F * CaloMET_h, * CaloMET_phi_h;
         TH1F * CaloMETBE_h, * CaloMETBE_phi_h, * CaloMETBE20_phi_h;
@@ -98,11 +104,13 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
         TH1F * myCaloMETBE1_HPU_h, * myCaloMETBE1_phi_HPU_h;
         TH1F * myCaloMETBE_HHT_h, * myCaloMETBE_phi_HHT_h;
         TH1F * myCaloMETBE1_HHT_h, * myCaloMETBE1_phi_HHT_h;
-        TH1F * myCaloMETBE_Muon_h, * myCaloMETBE_Muon_phi_h;
-        TH1F * myCaloMETBE1_Muon_h, * myCaloMETBE1_Muon_phi_h;
         TH1F * myCaloETBE_h, * myCaloETBE1_h;
+
+        const int METResArraySize = 9;
+        const double METResArray [10] = {0.0, 5.0, 15.0, 30.0, 50.0, 75.0, 105.0, 140.0, 180.0, 225.0};
+
         TH2F * CaloMETBE_vs_PU_h, * CaloMETBE_phi_vs_PU_h;
-        TH2F * myCaloMETBE_Muon_vs_PU_h, * myCaloMETBE_Muon_phi_vs_PU_h;
+        TH2F * UPara_ratio_vs_Zpt_h, * UPara_vs_Zpt_h, * UVert_vs_Zpt_h;
 };
 
 //
@@ -117,15 +125,17 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 // constructors and destructor
 //
 HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
-    print_channel(iConfig.getUntrackedParameter<bool>("print_channel")),
-    is_MC(iConfig.getUntrackedParameter<bool>("is_MC"))
+    PrintChannel_(iConfig.getUntrackedParameter<bool>("PrintChannel")),
+    IsMC_(iConfig.getUntrackedParameter<bool>("IsMC")),
+    RunMod_(iConfig.getUntrackedParameter<std::string>("RunMod"))
 {
     //now do what ever initialization is needed
     HBHERecHitsToken_ = consumes<HBHERecHitCollection>(edm::InputTag("hbhereco"));
-    if(is_MC)GenMETToken_ = consumes<std::vector<reco::GenMET>>(edm::InputTag("genMetTrue"));
+    if(IsMC_)GenMETToken_ = consumes<std::vector<reco::GenMET>>(edm::InputTag("genMetTrue"));
     CaloMETToken_ = consumes<std::vector<reco::CaloMET>>(edm::InputTag("caloMet"));
     CaloMETBEToken_ = consumes<std::vector<reco::CaloMET>>(edm::InputTag("caloMetBE"));
     MuonToken_ = consumes<std::vector<reco::Muon>>(edm::InputTag("muons"));
+    ElectronToken_ = consumes<std::vector<reco::GsfElectron>>(edm::InputTag("gedGsfElectrons"));
     PFJetToken_ = consumes<std::vector<reco::PFJet>>(edm::InputTag("ak4PFJetsCHS"));
     VertexToken_ = consumes<std::vector<reco::Vertex>>(edm::InputTag("offlinePrimaryVertices"));
 
@@ -133,7 +143,9 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
     BaselineTest_h = TFS->make<TH1F>("BaselineTest_h", "0: all. 1: pass", 2, 0.0, 2.0);
     PU_h = TFS->make<TH1F>("PU_h", "PU_h", 100, 0.0, 100.0);
     HT_h = TFS->make<TH1F>("HT_h", "HT_h", 200, 0.0, 1000.0);
-    if(is_MC)
+    nAllEle_h = TFS->make<TH1F>("nAllEle_h", "nAllEle_h", 10, 0.0, 10.0);
+    nSelEle_h = TFS->make<TH1F>("nSelEle_h", "nSelEle_h", 10, 0.0, 10.0);
+    if(IsMC_)
     {
         GenMET_h = TFS->make<TH1F>("GenMET_h", "GenMET_h", 100, 0.0, 200.0);
         GenMET_phi_h = TFS->make<TH1F>("GenMET_phi_h", "GenMET_phi_h", 100, -3.2, 3.2);
@@ -161,18 +173,15 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
     myCaloMETBE1_HHT_h = TFS->make<TH1F>("myCaloMETBE1_HHT_h", "myCaloMETBE1_HHT_h", 100, 0.0, 200.0);
     myCaloMETBE1_phi_HHT_h = TFS->make<TH1F>("myCaloMETBE1_phi_HHT_h", "myCaloMETBE1_phi_HHT_h", 100, -3.2, 3.2);
 
-    myCaloMETBE_Muon_h = TFS->make<TH1F>("myCaloMETBE_Muon_h", "myCaloMETBE_Muon_h", 100, 0.0, 200.0);
-    myCaloMETBE_Muon_phi_h = TFS->make<TH1F>("myCaloMETBE_Muon_phi_h", "myCaloMETBE_Muon_phi_h", 100, -3.2, 3.2);
-    myCaloMETBE1_Muon_h = TFS->make<TH1F>("myCaloMETBE1_Muon_h", "myCaloMETBE1_Muon_h", 100, 0.0, 200.0);
-    myCaloMETBE1_Muon_phi_h = TFS->make<TH1F>("myCaloMETBE1_Muon_phi_h", "myCaloMETBE1_Muon_phi_h", 100, -3.2, 3.2);
-
     myCaloETBE_h = TFS->make<TH1F>("myCaloETBE_h", "myCaloETBE_h", 200, 0.0, 1000.0);
     myCaloETBE1_h = TFS->make<TH1F>("myCaloETBE1_h", "myCaloETBE1_h", 200, 0.0, 1000.0);
 
     CaloMETBE_vs_PU_h = TFS->make<TH2F>("CaloMETBE_vs_PU_h", "CaloMETBE_vs_PU_h", 100, 0.0, 100.0, 100, 0.0, 200.0);
     CaloMETBE_phi_vs_PU_h = TFS->make<TH2F>("CaloMETBE_phi_vs_PU_h", "CaloMETBE_phi_vs_PU_h", 100, 0.0, 100.0, 100, -3.2, 3.2);
-    myCaloMETBE_Muon_vs_PU_h = TFS->make<TH2F>("myCaloMETBE_Muon_vs_PU_h", "myCaloMETBE_Muon_vs_PU_h", 100, 0.0, 100.0, 100, 0.0, 200.0);
-    myCaloMETBE_Muon_phi_vs_PU_h = TFS->make<TH2F>("myCaloMETBE_Muon_phi_vs_PU_h", "myCaloMETBE_Muon_phi_vs_PU_h", 100, 0.0, 100.0, 100, -3.2, 3.2);
+
+    UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("UPara_ratio_vs_Zpt_h", "UPara_ratio_vs_Zpt_h", 20, 0.0, 200.0, 200, -10.0, 10.0);
+    UPara_vs_Zpt_h = TFS->make<TH2F>("UPara_vs_Zpt_h", "UPara_vs_Zpt_h", METResArraySize, METResArray, 200, -300.0, 200.0);
+    UVert_vs_Zpt_h = TFS->make<TH2F>("UVert_vs_Zpt_h", "UVert_vs_Zpt_h", METResArraySize, METResArray, 200, -150.0, 150.0);
 }
 
 
@@ -193,20 +202,49 @@ HCAL_MET_Ana::~HCAL_MET_Ana()
 
 void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-    edm::Handle<std::vector<reco::Muon>> MuonHandle;
-    iEvent.getByToken(MuonToken_, MuonHandle);
-    auto Muons = MuonHandle.product();
-    auto SelMuons = sel_muons(*Muons);
+    bool PassZSel = false;
+    math::XYZTLorentzVector SelZ;
+
+    if(RunMod_ == "Zmumu")
+    {
+        edm::Handle<std::vector<reco::Muon>> MuonHandle;
+        iEvent.getByToken(MuonToken_, MuonHandle);
+        auto Muons = MuonHandle.product();
+        auto SelMuons = sel_muons(*Muons);
+        if(SelMuons.size() == 2)
+        {
+            auto SelZs = sel_z_mumu(SelMuons);
+            if(SelZs.size() == 1)
+            {
+                SelZ = SelZs.at(0);
+                PassZSel = true;
+            }
+        }
+    }
+
+    if(RunMod_ == "Zee")
+    {
+        edm::Handle<std::vector<reco::GsfElectron>> ElectronHandle;
+        iEvent.getByToken(ElectronToken_, ElectronHandle);
+        auto Electrons = ElectronHandle.product();
+        auto SelElectrons = sel_electrons(*Electrons);
+        nAllEle_h->Fill(Electrons->size());
+        nSelEle_h->Fill(SelElectrons.size());
+        if(SelElectrons.size() == 2)
+        {
+            auto SelZs = sel_z_ee(SelElectrons);
+            if(SelZs.size() == 1)
+            {
+                SelZ = SelZs.at(0);
+                PassZSel = true;
+            }
+        }
+    }
 
     BaselineTest_h->Fill(0);
-    if(SelMuons.size() == 2 && pass_z_sel(SelMuons))
+    if(PassZSel)
     {
         BaselineTest_h->Fill(1);
-        math::PtEtaPhiMLorentzVector MuonTotLV;
-        for(auto Muon : *Muons)
-        {
-            MuonTotLV += Muon.p4();
-        }
 
         edm::Handle<std::vector<reco::Vertex>> VertexHandle;
         iEvent.getByToken(VertexToken_, VertexHandle);
@@ -260,7 +298,7 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                 }
             }
 
-            if(print_channel) std::cout << Hid << ", " << RawId << ", " << SubDet << ", " << Depth << ", " << Ieta << ", " << Eta << ", " << Iphi << ", " << Phi << ", " << Energy << std::endl;
+            if(PrintChannel_) std::cout << Hid << ", " << RawId << ", " << SubDet << ", " << Depth << ", " << Ieta << ", " << Eta << ", " << Iphi << ", " << Phi << ", " << Energy << std::endl;
         }
 
         auto myCaloMETBE = - HBHETotLV;
@@ -283,6 +321,19 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         myCaloMETBE_HB_h->Fill((- HBTotLV).Pt());
         myCaloMETBE_HE_h->Fill((- HETotLV).Pt());
 
+        //=========== MET response and resolution start =========
+        auto SelZ_pt = SelZ.Pt();
+        auto dPhiZMET = myCaloMETBE_phi - SelZ.Phi();
+        auto METPara = myCaloMETBE_pt * TMath::Cos(dPhiZMET);
+        auto METVert = myCaloMETBE_pt * TMath::Sin(dPhiZMET);
+        auto UPara = - METPara - SelZ_pt;
+        auto UVert = - METVert;
+
+        UPara_ratio_vs_Zpt_h->Fill(SelZ_pt, - UPara / SelZ_pt);
+        UPara_vs_Zpt_h->Fill(SelZ_pt, UPara);
+        UVert_vs_Zpt_h->Fill(SelZ_pt, UVert);
+        //=========== MET response and resolution end ==========
+
         auto myCaloMETBE1 = - HBHE1TotLV;
         auto myCaloMETBE1_pt = myCaloMETBE1.Pt();
         auto myCaloMETBE1_phi = myCaloMETBE1.Phi();
@@ -300,20 +351,7 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         }
         myCaloETBE1_h->Fill(HBHE1ET);
 
-        auto myCaloMETBE_Muon = - HBHETotLV - MuonTotLV;
-        auto myCaloMETBE_Muon_pt = myCaloMETBE_Muon.Pt();
-        auto myCaloMETBE_Muon_phi = myCaloMETBE_Muon.Phi();
-
-        myCaloMETBE_Muon_h->Fill(myCaloMETBE_Muon_pt);
-        myCaloMETBE_Muon_phi_h->Fill(myCaloMETBE_Muon_phi);
-        myCaloMETBE_Muon_vs_PU_h->Fill(nPU, myCaloMETBE_Muon_pt);
-        myCaloMETBE_Muon_phi_vs_PU_h->Fill(nPU, myCaloMETBE_Muon_phi);
-
-        auto myCaloMETBE1_Muon = - HBHE1TotLV - MuonTotLV;
-        myCaloMETBE1_Muon_h->Fill(myCaloMETBE1_Muon.Pt());
-        myCaloMETBE1_Muon_phi_h->Fill(myCaloMETBE1_Muon.Phi());
-
-        if(is_MC)
+        if(IsMC_)
         {
             edm::Handle<std::vector<reco::GenMET>> GenMETHandle;
             iEvent.getByToken(GenMETToken_, GenMETHandle);
@@ -372,16 +410,44 @@ std::vector<reco::Muon> HCAL_MET_Ana::sel_muons(std::vector<reco::Muon> Muons)
     return SelMuons;
 }
 
-bool HCAL_MET_Ana::pass_z_sel(std::vector<reco::Muon> SelMuons)
+std::vector<reco::GsfElectron> HCAL_MET_Ana::sel_electrons(std::vector<reco::GsfElectron> Electrons)
 {
+    float LepPtCut = 10;
+    float EtaCut = 2.4;
+
+    std::vector<reco::GsfElectron> SelElectrons = {};
+    for(auto Electron : Electrons)
+    {
+        if (Electron.p4().Pt() > LepPtCut && fabs(Electron.p4().Eta()) < EtaCut)
+        {SelElectrons.push_back(Electron);}
+    }
+    return SelElectrons;
+}
+
+std::vector<math::XYZTLorentzVector> HCAL_MET_Ana::sel_z_mumu(std::vector<reco::Muon> SelMuons)
+{
+    std::vector<math::XYZTLorentzVector> SelZmumu = {};
     auto Mu1 = SelMuons.at(0);
     auto Mu2 = SelMuons.at(1);
     if(std::max(Mu1.p4().Pt(), Mu2.p4().Pt()) > 20 && (Mu1.charge() + Mu2.charge() == 0))
     {
         auto ZmumuCand = Mu1.p4() + Mu2.p4();
-        if(ZmumuCand.M() > 81 && ZmumuCand.M() < 101) return true;
+        if(ZmumuCand.M() > 81 && ZmumuCand.M() < 101) SelZmumu.push_back(ZmumuCand);
     }
-    return false;
+    return SelZmumu;
+}
+
+std::vector<math::XYZTLorentzVector> HCAL_MET_Ana::sel_z_ee(std::vector<reco::GsfElectron> SelElectrons)
+{
+    std::vector<math::XYZTLorentzVector> SelZee = {};
+    auto Ele1 = SelElectrons.at(0);
+    auto Ele2 = SelElectrons.at(1);
+    if(std::max(Ele1.p4().Pt(), Ele2.p4().Pt()) > 20 && (Ele1.charge() + Ele2.charge() == 0))
+    {
+        auto ZeeCand = Ele1.p4() + Ele2.p4();
+        if(ZeeCand.M() > 81 && ZeeCand.M() < 101) SelZee.push_back(ZeeCand);
+    }
+    return SelZee;
 }
 
 float HCAL_MET_Ana::calc_ht(std::vector<reco::PFJet> PFJets)

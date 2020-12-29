@@ -3,13 +3,13 @@
 
 import ROOT as rt
 
-BaseName = "default recHit"
-BaseFileList = ["2018_DYJetsToMuMu_M-50_RECO_origin_recHit_plots.root"]
+BaseName = "MAHI recHits"
+BaseFileList = ["DoubleMuon_Run2018A_Run_315512_RECO_origin_recHit_plots.root"]
 BaseHistList = ["myCaloMETBE_h", "myCaloMETBE_HB_h", "myCaloMETBE_HE_h"]
 
-Comp1Name = "DLPHIN no SF"
+Comp1Name = "DLPHIN recHits"
 Comp1FileList = BaseFileList
-Comp1FileList = ["2018_DYJetsToMuMu_M-50_RECO_DLPHIN_energy_plots.root"]
+Comp1FileList = ["DoubleMuon_Run2018A_Run_315512_RECO_DLPHIN_no_SF_plots.root"]
 Comp1HistList = BaseHistList
 #Comp1HistList = ["myCaloMETBE_HB_h"]
 
@@ -22,9 +22,10 @@ Comp2HistList = BaseHistList
 ShapeComp = True
 
 YTitle = "Events"
+if ShapeComp: YTitle = "A.U."
 XTitle = "MET [GeV]"
 
-FileDir = ""
+FileDir = "results_temp/"
 HistDir = "myAna/"
 
 class MyStruct:
@@ -60,14 +61,14 @@ for i in range(len(BaseFileList)):
         PadDown.SetGrid()
         PadDown.Draw()
 
-        OutName = ""
+        OutName = BaseFileList[i].replace(".root", "_")
         BaseHist = None
         MaxY = 0
 
         for k in range(len(StructList)):
             iFileName = StructList[k].FileList[i]
             iHistName = StructList[k].HistList[j]
-            OutName = OutName + iHistName + "_"
+            OutName = OutName + iHistName.replace("_h", "_")
             iFile = rt.TFile.Open(FileDir + iFileName)
             iHist = iFile.Get(HistDir + iHistName)
             iHist.SetLineColor(StructList[k].Color)

@@ -15,9 +15,9 @@ globalTag = '102X_dataRun2_v12'
 process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
 process.GlobalTag.globaltag = globalTag
 
-#process.options = cms.untracked.PSet(
-#  numberOfThreads=cms.untracked.uint32(4)
-#)
+process.options = cms.untracked.PSet(
+  numberOfThreads=cms.untracked.uint32(2)
+)
 
 f = open(sys.argv[2], "r")
 my_list = f.readlines()
@@ -41,6 +41,6 @@ process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
 )
 process.TFileService = cms.Service("TFileService", fileName = cms.string(OutputFile) )
-process.myAna = cms.EDAnalyzer("HCAL_MET_Ana", print_channel = cms.untracked.bool(False), is_MC = cms.untracked.bool(False))
+process.myAna = cms.EDAnalyzer("HCAL_MET_Ana", PrintChannel = cms.untracked.bool(False), IsMC = cms.untracked.bool(False), RunMod = cms.untracked.string("Zmumu"))
 
 process.path = cms.Path(process.myAna)
