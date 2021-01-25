@@ -29,11 +29,14 @@ Implementation:
 //DataFormats and Geometry
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
 #include "DataFormats/HcalRecHit/interface/HcalRecHitCollections.h"
+#include "DataFormats/CaloTowers/interface/CaloTowerCollection.h"
 #include "DataFormats/METReco/interface/CaloMET.h"
 #include "DataFormats/METReco/interface/GenMET.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
-#include "DataFormats/JetReco/interface/PFJetCollection.h"
+#include "DataFormats/JetReco/interface/PFJet.h"
+#include "DataFormats/JetReco/interface/CaloJet.h"
+#include "DataFormats/JetReco/interface/GenJet.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
@@ -44,6 +47,7 @@ Implementation:
 #include "TH2.h"
 #include "TTree.h"
 #include "TMath.h"
+#include <Math/VectorUtil.h>
 
 //STL headers
 #include <vector>
@@ -81,15 +85,19 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
         bool PrintChannel_;
         bool IsMC_;
         std::string RunMod_;
+        bool PassZSel = false;
 
         edm::EDGetTokenT<HBHERecHitCollection> HBHERecHitsToken_;
-        edm::EDGetTokenT<std::vector<reco::GenMET>> GenMETToken_;
+        edm::EDGetTokenT<CaloTowerCollection> CaloTowersToken_;
         edm::EDGetTokenT<std::vector<reco::CaloMET>> CaloMETToken_;
         edm::EDGetTokenT<std::vector<reco::CaloMET>> CaloMETBEToken_;
         edm::EDGetTokenT<std::vector<reco::Muon>> MuonToken_;
         edm::EDGetTokenT<std::vector<reco::GsfElectron>> ElectronToken_;
+        edm::EDGetTokenT<std::vector<reco::CaloJet>> CaloJetToken_;
         edm::EDGetTokenT<std::vector<reco::PFJet>> PFJetToken_;
         edm::EDGetTokenT<std::vector<reco::Vertex>> VertexToken_;
+        edm::EDGetTokenT<std::vector<reco::GenMET>> GenMETToken_;
+        edm::EDGetTokenT<std::vector<reco::GenJet>> GenJetToken_;
 
         TH1F * BaselineTest_h;
         TH1F * PU_h, * HT_h;
@@ -111,6 +119,9 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
         TH2F * CaloMETBE_vs_PU_h, * CaloMETBE_phi_vs_PU_h;
         TH2F * UPara_ratio_vs_Zpt_h, * UPara_vs_Zpt_h, * UVert_vs_Zpt_h;
+        TH2F * CaloJet_vs_GenJet_h, * CaloJet_vs_GenJet_etaL_h, * CaloJet_vs_GenJet_etaM_h, * CaloJet_vs_GenJet_etaH_h;
+        TH2F * myCaloETBE_vs_eta_h;
+        TH2F * CaloTowerET_vs_eta_h, * CaloTowerEMET_vs_eta_h, * CaloTowerHadET_vs_eta_h;
 };
 
 //
@@ -129,15 +140,28 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
     IsMC_(iConfig.getUntrackedParameter<bool>("IsMC")),
     RunMod_(iConfig.getUntrackedParameter<std::string>("RunMod"))
 {
+    if(RunMod_ != "Zmumu" && RunMod_ != "Zee")
+    {
+        std::cout << "RunMod is not Zmumu or Zee, set PassZSel to true" << std::endl;
+        PassZSel = true;
+    }
+
+
     //now do what ever initialization is needed
     HBHERecHitsToken_ = consumes<HBHERecHitCollection>(edm::InputTag("hbhereco"));
-    if(IsMC_)GenMETToken_ = consumes<std::vector<reco::GenMET>>(edm::InputTag("genMetTrue"));
+    CaloTowersToken_ = consumes<CaloTowerCollection>(edm::InputTag("towerMaker"));
     CaloMETToken_ = consumes<std::vector<reco::CaloMET>>(edm::InputTag("caloMet"));
     CaloMETBEToken_ = consumes<std::vector<reco::CaloMET>>(edm::InputTag("caloMetBE"));
     MuonToken_ = consumes<std::vector<reco::Muon>>(edm::InputTag("muons"));
     ElectronToken_ = consumes<std::vector<reco::GsfElectron>>(edm::InputTag("gedGsfElectrons"));
+    CaloJetToken_ = consumes<std::vector<reco::CaloJet>>(edm::InputTag("ak4CaloJets"));
     PFJetToken_ = consumes<std::vector<reco::PFJet>>(edm::InputTag("ak4PFJetsCHS"));
     VertexToken_ = consumes<std::vector<reco::Vertex>>(edm::InputTag("offlinePrimaryVertices"));
+    if(IsMC_)
+    {
+        GenMETToken_ = consumes<std::vector<reco::GenMET>>(edm::InputTag("genMetTrue"));
+        GenJetToken_ = consumes<std::vector<reco::GenJet>>(edm::InputTag("ak4GenJetsNoNu"));
+    }
 
     edm::Service<TFileService> TFS;
     BaselineTest_h = TFS->make<TH1F>("BaselineTest_h", "0: all. 1: pass", 2, 0.0, 2.0);
@@ -145,11 +169,6 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
     HT_h = TFS->make<TH1F>("HT_h", "HT_h", 200, 0.0, 1000.0);
     nAllEle_h = TFS->make<TH1F>("nAllEle_h", "nAllEle_h", 10, 0.0, 10.0);
     nSelEle_h = TFS->make<TH1F>("nSelEle_h", "nSelEle_h", 10, 0.0, 10.0);
-    if(IsMC_)
-    {
-        GenMET_h = TFS->make<TH1F>("GenMET_h", "GenMET_h", 100, 0.0, 200.0);
-        GenMET_phi_h = TFS->make<TH1F>("GenMET_phi_h", "GenMET_phi_h", 100, -3.2, 3.2);
-    }
     CaloMET_h = TFS->make<TH1F>("CaloMET_h", "CaloMET_h", 100, 0.0, 200.0);
     CaloMET_phi_h = TFS->make<TH1F>("CaloMET_phi_h", "CaloMET_phi_h", 100, -3.2, 3.2);
     CaloMETBE_h = TFS->make<TH1F>("CaloMETBE_h", "CaloMETBE_h", 100, 0.0, 200.0);
@@ -176,12 +195,25 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
     myCaloETBE_h = TFS->make<TH1F>("myCaloETBE_h", "myCaloETBE_h", 200, 0.0, 1000.0);
     myCaloETBE1_h = TFS->make<TH1F>("myCaloETBE1_h", "myCaloETBE1_h", 200, 0.0, 1000.0);
 
+    CaloTowerET_vs_eta_h = TFS->make<TH2F>("CaloTowerET_vs_eta_h", "CaloTowerET_vs_eta_h", 100, -5.0, 5.0, 200, 0.0, 5.0);
+    CaloTowerEMET_vs_eta_h = TFS->make<TH2F>("CaloTowerEMET_vs_eta_h", "CaloTowerEMET_vs_eta_h", 100, -5.0, 5.0, 200, 0.0, 5.0);
+    CaloTowerHadET_vs_eta_h = TFS->make<TH2F>("CaloTowerHadET_vs_eta_h", "CaloTowerHadET_vs_eta_h", 100, -5.0, 5.0, 200, 0.0, 5.0);
+    myCaloETBE_vs_eta_h = TFS->make<TH2F>("myCaloETBE_vs_eta_h", "myCaloETBE_vs_eta_h", 60, -3.0, 3.0, 200, 0.0, 1.0);
     CaloMETBE_vs_PU_h = TFS->make<TH2F>("CaloMETBE_vs_PU_h", "CaloMETBE_vs_PU_h", 100, 0.0, 100.0, 100, 0.0, 200.0);
     CaloMETBE_phi_vs_PU_h = TFS->make<TH2F>("CaloMETBE_phi_vs_PU_h", "CaloMETBE_phi_vs_PU_h", 100, 0.0, 100.0, 100, -3.2, 3.2);
 
     UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("UPara_ratio_vs_Zpt_h", "UPara_ratio_vs_Zpt_h", 20, 0.0, 200.0, 200, -10.0, 10.0);
     UPara_vs_Zpt_h = TFS->make<TH2F>("UPara_vs_Zpt_h", "UPara_vs_Zpt_h", METResArraySize, METResArray, 200, -300.0, 200.0);
     UVert_vs_Zpt_h = TFS->make<TH2F>("UVert_vs_Zpt_h", "UVert_vs_Zpt_h", METResArraySize, METResArray, 200, -150.0, 150.0);
+    if(IsMC_)
+    {
+        GenMET_h = TFS->make<TH1F>("GenMET_h", "GenMET_h", 100, 0.0, 200.0);
+        GenMET_phi_h = TFS->make<TH1F>("GenMET_phi_h", "GenMET_phi_h", 100, -3.2, 3.2);
+        CaloJet_vs_GenJet_h = TFS->make<TH2F>("CaloJet_vs_GenJet_h", "CaloJet_vs_GenJet_h", 200, 0.0, 1000.0, 200, 0.0, 1000.0);
+        CaloJet_vs_GenJet_etaL_h = TFS->make<TH2F>("CaloJet_vs_GenJet_etaL_h", "CaloJet_vs_GenJet_etaL_h", 200, 0.0, 1000.0, 200, 0.0, 1000.0);
+        CaloJet_vs_GenJet_etaM_h = TFS->make<TH2F>("CaloJet_vs_GenJet_etaM_h", "CaloJet_vs_GenJet_etaM_h", 200, 0.0, 1000.0, 200, 0.0, 1000.0);
+        CaloJet_vs_GenJet_etaH_h = TFS->make<TH2F>("CaloJet_vs_GenJet_etaH_h", "CaloJet_vs_GenJet_etaH_h", 200, 0.0, 1000.0, 200, 0.0, 1000.0);
+    }
 }
 
 
@@ -202,7 +234,6 @@ HCAL_MET_Ana::~HCAL_MET_Ana()
 
 void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-    bool PassZSel = false;
     math::XYZTLorentzVector SelZ;
 
     if(RunMod_ == "Zmumu")
@@ -222,7 +253,7 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         }
     }
 
-    if(RunMod_ == "Zee")
+    else if(RunMod_ == "Zee")
     {
         edm::Handle<std::vector<reco::GsfElectron>> ElectronHandle;
         iEvent.getByToken(ElectronToken_, ElectronHandle);
@@ -262,6 +293,18 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         iSetup.get<CaloGeometryRecord>().get(CaloGeoHandle);
         CaloGeometry CaloGeo = *CaloGeoHandle;
 
+        edm::Handle<CaloTowerCollection> CaloTowersHandle;
+        iEvent.getByToken(CaloTowersToken_, CaloTowersHandle);
+        auto CaloTowers = CaloTowersHandle.product();
+        for(auto CaloTower : *CaloTowers)
+        {
+            //std::cout << "ET " << CaloTower.et() << ", hadEt " << CaloTower.hadEt() << ", emEt " << CaloTower.emEt() << std::endl;
+            //std::cout << CaloTower.ieta() << ", " << CaloTower.eta() << ", " << CaloTower.p4().Eta() << std::endl;
+            CaloTowerET_vs_eta_h->Fill(CaloTower.eta(), CaloTower.et()/nPU);
+            CaloTowerEMET_vs_eta_h->Fill(CaloTower.eta(), CaloTower.emEt()/nPU);
+            CaloTowerHadET_vs_eta_h->Fill(CaloTower.eta(), CaloTower.hadEt()/nPU);
+        }
+
         edm::Handle<HBHERecHitCollection> HBHERecHitsHandle;
         iEvent.getByToken(HBHERecHitsToken_, HBHERecHitsHandle);
         auto HBHERecHits = HBHERecHitsHandle.product();
@@ -284,6 +327,8 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
             auto Theta = 2 * TMath::ATan(exp(-1 * Eta));
             auto ET = Energy * TMath::Sin(Theta);
+
+            myCaloETBE_vs_eta_h->Fill(Eta, ET/nPU);
 
             if(Energy > 0)
             {
@@ -361,6 +406,38 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             {
                 GenMET_h->Fill(GenMET->at(0).p4().Pt());
                 GenMET_phi_h->Fill(GenMET->at(0).p4().Phi());
+            }
+
+            edm::Handle<std::vector<reco::GenJet>> GenJetHandle;
+            iEvent.getByToken(GenJetToken_, GenJetHandle);
+            auto GenJets = GenJetHandle.product();
+
+            edm::Handle<std::vector<reco::CaloJet>> CaloJetHandle;
+            iEvent.getByToken(CaloJetToken_, CaloJetHandle);
+            auto CaloJets = CaloJetHandle.product();
+
+            for(auto GenJet : *GenJets)
+            {
+                auto GenJetP4 = GenJet.p4();
+                if(fabs(GenJetP4.Eta()) < 3.0)
+                {
+                    for(auto CaloJet : *CaloJets)
+                    {
+                        auto CaloJetP4 = CaloJet.p4();
+                        if(ROOT::Math::VectorUtil::DeltaR(GenJetP4, CaloJetP4) < 0.2)
+                        //if(ROOT::Math::VectorUtil::DeltaR(GenJetP4, CaloJetP4) < 0.2 &&
+                        //    GenJetP4.Pt() > CaloJetP4.Pt() * 0.5 && GenJetP4.Pt() < CaloJetP4.Pt() * 2.0)
+                        {
+                            CaloJet_vs_GenJet_h->Fill(GenJetP4.Pt(), CaloJetP4.Pt());
+                            if(fabs(GenJetP4.Eta()) < 1.3)
+                            {CaloJet_vs_GenJet_etaL_h->Fill(GenJetP4.Pt(), CaloJetP4.Pt());}
+                            else if(fabs(GenJetP4.Eta()) < 2.5)
+                            {CaloJet_vs_GenJet_etaM_h->Fill(GenJetP4.Pt(), CaloJetP4.Pt());}
+                            else
+                            {CaloJet_vs_GenJet_etaH_h->Fill(GenJetP4.Pt(), CaloJetP4.Pt());}
+                        }
+                    }
+                }
             }
         }
 

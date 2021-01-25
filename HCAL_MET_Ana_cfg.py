@@ -11,7 +11,7 @@ process.load("Configuration.StandardSequences.GeometryDB_cff")
 process.load("Configuration.StandardSequences.MagneticField_cff")
 
 # global tag
-globalTag = '102X_dataRun2_v12'
+globalTag = '106X_dataRun2_v28'
 process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
 process.GlobalTag.globaltag = globalTag
 
@@ -22,6 +22,10 @@ process.options = cms.untracked.PSet(
 f = open(sys.argv[2], "r")
 my_list = f.readlines()
 f.close()
+
+if len(sys.argv) == 4:
+    nFile = int(sys.argv[3])
+    my_list = my_list[0:nFile]
 
 OutputFile = sys.argv[2].split("/")[-1]
 OutputFile = OutputFile.split(".")[0]
@@ -41,6 +45,6 @@ process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
 )
 process.TFileService = cms.Service("TFileService", fileName = cms.string(OutputFile) )
-process.myAna = cms.EDAnalyzer("HCAL_MET_Ana", PrintChannel = cms.untracked.bool(False), IsMC = cms.untracked.bool(False), RunMod = cms.untracked.string("Zmumu"))
+process.myAna = cms.EDAnalyzer("HCAL_MET_Ana", PrintChannel = cms.untracked.bool(False), IsMC = cms.untracked.bool(False), RunMod = cms.untracked.string(""))
 
 process.path = cms.Path(process.myAna)

@@ -1,16 +1,15 @@
 int plot_HCAL()
 {
-    //TFile *f1 = new TFile("results_temp/DoubleMuon_Run2018A_Run_315512_NANO_origin_recHit_plots.root");
-    //TFile *f1 = new TFile("results_temp/DoubleMuon_Run2018A_Run_315512_nanoAOD_DLPHIN_energy_plots.root");
-    TFile *f1 = new TFile("results_temp/DoubleMuon_Run2018A_Run_315512_RECO_origin_recHit_plots.root");
-    //TFile *f1 = new TFile("results_temp/DoubleMuon_Run2018A_Run_315512_RECO_DLPHIN_energy_plots.root");
+    TFile *f1 = new TFile("results_temp/UL_ZeroBias_Run2018B_Run_317182_RECO_default_recHits_plots.root");
 
     bool plot_MET = false;
     bool plot_METphi = false;
     bool plot_resolution = false;
     bool plot_response = false;
-    bool plot_MET_vs_PU = true;
+    bool plot_MET_vs_PU = false;
     bool plot_METphi_vs_PU = false;
+    bool plot_CaloJet_vs_GenJet = false;
+    bool plot_CaloTowerET_vs_eta = true;
 
     bool plot_2D = false;
     bool plot_1D = false;
@@ -132,6 +131,49 @@ int plot_HCAL()
         y_title = "MET phi";
     }
 
+    if(plot_CaloJet_vs_GenJet)
+    {
+        hist_dir = "myAna/";
+
+        hist_list = 
+        {
+            "CaloJet_vs_GenJet", "CaloJet_vs_GenJet_etaL", "CaloJet_vs_GenJet_etaM", "CaloJet_vs_GenJet_etaH"
+        };
+
+        plot_2D = true;
+        plot_log = true;
+        profile_SD = true;
+
+        //ymin = 0;
+        //ymax = 1.2;
+
+        x_title = "gen jet pt";
+        y_title = "reco jet pt";
+        set_SD_range = true;
+        SDmin = 0;
+        SDmax = 1;
+    }
+
+    if(plot_CaloTowerET_vs_eta)
+    {
+        hist_dir = "myAna/";
+
+        hist_list = 
+        {
+            "CaloTowerET_vs_eta", "CaloTowerEMET_vs_eta", "CaloTowerHadET_vs_eta",
+        };
+
+        plot_2D = true;
+        plot_log = true;
+        //profile_SD = true;
+
+        ymin = 0;
+        ymax = 0.1;
+
+        x_title = "eta";
+        y_title = "ET / PU";
+    }
+
     for(int i = 0; i < hist_list.size(); i++)
     {
         TString hist_name = hist_list.at(i);
@@ -152,7 +194,7 @@ int plot_HCAL()
 
             h1->Draw("colz");
             //h1->Draw("surf3");
-            //h1->SetTitle(h1_name);
+            h1->SetTitle(hist_name);
             h1->GetXaxis()->SetTitle(x_title);
             h1->GetYaxis()->SetTitle(y_title);
             //h1->RebinX(10);
@@ -165,7 +207,7 @@ int plot_HCAL()
             //TProfile *px = h1->ProfileX("px", 1, -1, "os");
             TProfile *px = h1->ProfileX();
             if(profile_SD)px->BuildOptions(0, 0, "s");
-            //px->SetTitle(h1_name);
+            px->SetTitle(hist_name);
             //px->GetYaxis()->SetNdivisions(512);
             px->GetXaxis()->SetRangeUser(xmin, xmax);
             px->GetYaxis()->SetRangeUser(ymin, ymax);
@@ -190,7 +232,7 @@ int plot_HCAL()
 
             mycanvas->SaveAs("plots_temp/" + hist_name + "_profile.png");
 
-            TProfile* SD_h = (TProfile*)px->Clone(hist_name + "_SD_h");
+            TProfile* SD_h = (TProfile*)px->Clone(hist_name + "_SD");
             SD_h->Reset();
             for(int i = 1; i <= px->GetNbinsX(); i++)
             {
@@ -198,7 +240,7 @@ int plot_HCAL()
                 float center = px->GetBinContent(i);
                 float rel_error = 0;
                 if (center > 0) rel_error = error/center;
-                SD_h->SetBinContent(i, error);
+                SD_h->SetBinContent(i, rel_error);
                 SD_h->SetBinEntries(i, 1);
                 //std::cout << i << ", " << SD_h->GetBinContent(i) << ", " << SD_h->GetBinError(i) << std::endl;
             }
