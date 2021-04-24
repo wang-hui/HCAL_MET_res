@@ -1,6 +1,6 @@
 int plot_HCAL()
 {
-    TFile *f1 = new TFile("results_temp/UL_ZeroBias_Run2018B_Run_317182_RECO_default_recHits_plots.root");
+    TFile *f1 = new TFile("results/UL_QCD_HT2000toInf_reco_1dHB_2dHE_plots.root");
 
     bool plot_MET = false;
     bool plot_METphi = false;
@@ -9,7 +9,8 @@ int plot_HCAL()
     bool plot_MET_vs_PU = false;
     bool plot_METphi_vs_PU = false;
     bool plot_CaloJet_vs_GenJet = false;
-    bool plot_CaloTowerET_vs_eta = true;
+    bool plot_CaloJet_vs_GenJet_pull = true;
+    bool plot_CaloTowerET_vs_eta = false;
 
     bool plot_2D = false;
     bool plot_1D = false;
@@ -152,6 +153,29 @@ int plot_HCAL()
         set_SD_range = true;
         SDmin = 0;
         SDmax = 1;
+    }
+
+    if(plot_CaloJet_vs_GenJet_pull)
+    {
+        hist_dir = "myAna/";
+
+        hist_list = 
+        {
+            "CaloJet_vs_GenJet_pull", "CaloJet_vs_GenJet_etaL_pull", "CaloJet_vs_GenJet_etaM_pull", "CaloJet_vs_GenJet_etaH_pull",
+        };
+
+        plot_2D = true;
+        plot_log = true;
+        //profile_SD = true;
+
+        //ymin = 0;
+        //ymax = 1.2;
+
+        x_title = "gen jet pt";
+        y_title = "pull";
+        //set_SD_range = true;
+        //SDmin = 0;
+        //SDmax = 1;
     }
 
     if(plot_CaloTowerET_vs_eta)

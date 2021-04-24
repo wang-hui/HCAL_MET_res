@@ -120,6 +120,7 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
         TH2F * CaloMETBE_vs_PU_h, * CaloMETBE_phi_vs_PU_h;
         TH2F * UPara_ratio_vs_Zpt_h, * UPara_vs_Zpt_h, * UVert_vs_Zpt_h;
         TH2F * CaloJet_vs_GenJet_h, * CaloJet_vs_GenJet_etaL_h, * CaloJet_vs_GenJet_etaM_h, * CaloJet_vs_GenJet_etaH_h;
+        TH2F * CaloJet_vs_GenJet_pull_h, * CaloJet_vs_GenJet_etaL_pull_h, * CaloJet_vs_GenJet_etaM_pull_h, * CaloJet_vs_GenJet_etaH_pull_h;
         TH2F * myCaloETBE_vs_eta_h;
         TH2F * CaloTowerET_vs_eta_h, * CaloTowerEMET_vs_eta_h, * CaloTowerHadET_vs_eta_h;
 };
@@ -213,6 +214,10 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
         CaloJet_vs_GenJet_etaL_h = TFS->make<TH2F>("CaloJet_vs_GenJet_etaL_h", "CaloJet_vs_GenJet_etaL_h", 200, 0.0, 1000.0, 200, 0.0, 1000.0);
         CaloJet_vs_GenJet_etaM_h = TFS->make<TH2F>("CaloJet_vs_GenJet_etaM_h", "CaloJet_vs_GenJet_etaM_h", 200, 0.0, 1000.0, 200, 0.0, 1000.0);
         CaloJet_vs_GenJet_etaH_h = TFS->make<TH2F>("CaloJet_vs_GenJet_etaH_h", "CaloJet_vs_GenJet_etaH_h", 200, 0.0, 1000.0, 200, 0.0, 1000.0);
+        CaloJet_vs_GenJet_pull_h = TFS->make<TH2F>("CaloJet_vs_GenJet_pull_h", "CaloJet_vs_GenJet_pull_h", 200, 0.0, 1000.0, 200, 0.0, 10.0);
+        CaloJet_vs_GenJet_etaL_pull_h = TFS->make<TH2F>("CaloJet_vs_GenJet_etaL_pull_h", "CaloJet_vs_GenJet_etaL_pull_h", 200, 0.0, 1000.0, 200, 0.0, 10.0);
+        CaloJet_vs_GenJet_etaM_pull_h = TFS->make<TH2F>("CaloJet_vs_GenJet_etaM_pull_h", "CaloJet_vs_GenJet_etaM_pull_h", 200, 0.0, 1000.0, 200, 0.0, 10.0);
+        CaloJet_vs_GenJet_etaH_pull_h = TFS->make<TH2F>("CaloJet_vs_GenJet_etaH_pull_h", "CaloJet_vs_GenJet_etaH_pull_h", 200, 0.0, 1000.0, 200, 0.0, 10.0);
     }
 }
 
@@ -425,16 +430,29 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                     {
                         auto CaloJetP4 = CaloJet.p4();
                         if(ROOT::Math::VectorUtil::DeltaR(GenJetP4, CaloJetP4) < 0.2)
-                        //if(ROOT::Math::VectorUtil::DeltaR(GenJetP4, CaloJetP4) < 0.2 &&
-                        //    GenJetP4.Pt() > CaloJetP4.Pt() * 0.5 && GenJetP4.Pt() < CaloJetP4.Pt() * 2.0)
                         {
-                            CaloJet_vs_GenJet_h->Fill(GenJetP4.Pt(), CaloJetP4.Pt());
+                            auto GenPt = GenJetP4.Pt();
+                            auto RecoPt = CaloJetP4.Pt();
+                            float PtPull = 0;
+                            if(GenPt + RecoPt > 0) PtPull = fabs(GenPt - RecoPt) / sqrt(GenPt + RecoPt);
+
+                            CaloJet_vs_GenJet_h->Fill(GenPt, RecoPt);
+                            CaloJet_vs_GenJet_pull_h->Fill(GenPt, PtPull);
                             if(fabs(GenJetP4.Eta()) < 1.3)
-                            {CaloJet_vs_GenJet_etaL_h->Fill(GenJetP4.Pt(), CaloJetP4.Pt());}
+                            {
+                                CaloJet_vs_GenJet_etaL_h->Fill(GenPt, RecoPt);
+                                CaloJet_vs_GenJet_etaL_pull_h->Fill(GenPt, PtPull);
+                            }
                             else if(fabs(GenJetP4.Eta()) < 2.5)
-                            {CaloJet_vs_GenJet_etaM_h->Fill(GenJetP4.Pt(), CaloJetP4.Pt());}
+                            {
+                                CaloJet_vs_GenJet_etaM_h->Fill(GenPt, RecoPt);
+                                CaloJet_vs_GenJet_etaM_pull_h->Fill(GenPt, PtPull);
+                            }
                             else
-                            {CaloJet_vs_GenJet_etaH_h->Fill(GenJetP4.Pt(), CaloJetP4.Pt());}
+                            {
+                                CaloJet_vs_GenJet_etaH_h->Fill(GenPt, RecoPt);
+                                CaloJet_vs_GenJet_etaH_pull_h->Fill(GenPt, PtPull);
+                            }
                         }
                     }
                 }
