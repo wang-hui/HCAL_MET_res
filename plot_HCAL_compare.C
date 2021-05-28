@@ -2,30 +2,54 @@ int plot_HCAL_compare()
 {
     bool plot_CaloJet_vs_GenJet = true;
     bool plot_CaloJet_vs_GenJet_pull = false;
+    bool plot_MET_response = false;
+    bool plot_MET_resolution = false;
 
+/*
     std::vector<TString> hist_list =
     {
-        //"CaloJet_vs_GenJet", "CaloJet_vs_GenJet",
-        //"CaloJet_vs_GenJet_etaL", "CaloJet_vs_GenJet_etaL",
-        //"CaloJet_vs_GenJet_etaM", "CaloJet_vs_GenJet_etaM",
-        "CaloJet_vs_GenJet_etaH", "CaloJet_vs_GenJet_etaH",
+        //"LeadingCaloJet_vs_LeadingGenJet", "LeadingCaloJet_vs_LeadingGenJet", "LeadingCaloJet_vs_LeadingGenJet",
+        //"LeadingCaloJet_vs_LeadingGenJet_HB", "LeadingCaloJet_vs_LeadingGenJet_HB", "LeadingCaloJet_vs_LeadingGenJet_HB",
+        "LeadingCaloJet_vs_LeadingGenJet_HE", "LeadingCaloJet_vs_LeadingGenJet_HE", "LeadingCaloJet_vs_LeadingGenJet_HE",
+        //"CaloJet_vs_GenJet", "CaloJet_vs_GenJet", "CaloJet_vs_GenJet",
+        //"CaloJet_vs_GenJet_etaL", "CaloJet_vs_GenJet_etaL", "CaloJet_vs_GenJet_etaL",
+        //"CaloJet_vs_GenJet_etaM", "CaloJet_vs_GenJet_etaM", "CaloJet_vs_GenJet_etaM",
+        //"CaloJet_vs_GenJet_etaH", "CaloJet_vs_GenJet_etaH", "CaloJet_vs_GenJet_etaH",
     };
+*/
 
-    std::vector<TString> file_list = {"UL_QCD_HT2000toInf_RECO_default_recHits_plots", "UL_QCD_HT2000toInf_reco_1dHB_2dHE_plots"};
-    std::vector<TString> leg_list = {"MAHI", "DLPHIN"};
+    std::vector<TString> hist_list(4,
+                                    //"LeadingCaloJet_vs_LeadingGenJet"
+                                    //"LeadingCaloJet_vs_LeadingGenJet_HB"
+                                    //"LeadingCaloJet_vs_LeadingGenJet_HE"
+                                    //"DiJet_CaloJet_vs_GenJet"
+                                    "DiJet_CaloJet_vs_GenJet_HB"
+                                    //"DiJet_CaloJet_vs_GenJet_HE"
+                                    );
+
+    std::vector<TString> file_list = {"UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_origin_recHit_plots", "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_M0_energy_plots"};
+    file_list = {"UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_origin_recHit_plots", "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_M0_energy_plots", "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_plots", "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_scaled_plots"};
+
+    std::vector<TString> leg_list = {"MAHI", "M0"};
+    leg_list = {"MAHI", "M0", "DLPHIN", "DLPHIN scaled"};
+
     std::vector<int> color_list = {kRed, kBlue};
+    color_list = {kBlack, kRed, kBlue, kViolet};
 
-    std::vector<TH1F*> SD_list, px_list;
-    //std::vector<TProfile*> px_list;
+    std::vector<TProfile*> SD_list, px_list;
 
     bool overlay_px = false;
     bool do_fit = true;
+    bool scale_SD = true;
 
     TString hist_folder = "";
     hist_folder = "myAna";
-    int rebin_x = 4;
-    float px_scale = 0.8;
+    int rebin_x = 5;
+    float px_scale = 0.5;
     float px_shift = 0;
+
+    float SD_min = 0;
+    float SD_max = 120;
 
     TString x_title = "gen pt [GeV]";
     TString y_title = "reco pt [GeV]";
@@ -35,15 +59,55 @@ int plot_HCAL_compare()
     {
         hist_list =
         {
-            //"CaloJet_vs_GenJet_pull", "CaloJet_vs_GenJet_pull",
-            //"CaloJet_vs_GenJet_etaL_pull", "CaloJet_vs_GenJet_etaL_pull",
-            //"CaloJet_vs_GenJet_etaM_pull", "CaloJet_vs_GenJet_etaM_pull",
-            "CaloJet_vs_GenJet_etaH_pull", "CaloJet_vs_GenJet_etaH_pull",
+            "CaloJet_vs_GenJet_pull", "CaloJet_vs_GenJet_pull", //"CaloJet_vs_GenJet_pull",
+            //"CaloJet_vs_GenJet_etaL_pull", "CaloJet_vs_GenJet_etaL_pull", "CaloJet_vs_GenJet_etaL_pull",
+            //"CaloJet_vs_GenJet_etaM_pull", "CaloJet_vs_GenJet_etaM_pull", "CaloJet_vs_GenJet_etaM_pull",
+            //"CaloJet_vs_GenJet_etaH_pull", "CaloJet_vs_GenJet_etaH_pull", "CaloJet_vs_GenJet_etaH_pull",
         };
         y_title = "pull";
         SD_title = "pull";
         overlay_px = true;
         do_fit = false; 
+    }
+
+    if (plot_MET_response)
+    {
+        file_list = {"UL_EGamma_Run2018B_Run_317392_RECO_origin_recHit_plots", "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_plots", "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_respCorr_plots"};
+        leg_list = {"MAHI", "DLPHIN no respCorr", "DLPHIN with respCorr"};
+        hist_list =
+        {
+            "UPara_ratio_vs_Zpt", "UPara_ratio_vs_Zpt", "UPara_ratio_vs_Zpt",
+        };
+        px_scale = 1;
+
+        x_title = "Z pt [GeV]";
+        y_title = "- Upara / Z pt";
+        overlay_px = true;
+        do_fit = false; 
+    }
+
+    if (plot_MET_resolution)
+    {
+        file_list = {"UL_EGamma_Run2018B_Run_317392_RECO_origin_recHit_plots", "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_plots", "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_respCorr_plots"};
+        leg_list = {"MAHI", "DLPHIN no respCorr", "DLPHIN with respCorr"};
+        hist_list =
+        {
+            "UPara_vs_Zpt", "UPara_vs_Zpt", "UPara_vs_Zpt",
+            //"UVert_vs_Zpt", "UVert_vs_Zpt", "UVert_vs_Zpt",
+        };
+        px_scale = 1;
+
+        x_title = "Z pt [GeV]";
+        y_title = "Upara [GeV]";
+        SD_title = "#sigma_{Upara}";
+        //y_title = "Uvert [GeV]";
+        //SD_title = "#sigma_{Uvert}";
+        do_fit = false;
+        scale_SD = false;
+        SD_min = 0;
+        SD_max = 100;
+        rebin_x = 1;
+        px_shift = 5;
     }
 
     for(int i = 0; i < hist_list.size(); i++)
@@ -83,7 +147,7 @@ int plot_HCAL_compare()
         //px->SetTitle("");
         //px->GetYaxis()->SetNdivisions(512);
         px->GetXaxis()->SetRangeUser(xmin + px_shift, xmax * px_scale);
-        px->GetYaxis()->SetRangeUser(ymin, ymax * px_scale);
+        //px->GetYaxis()->SetRangeUser(0.5, 2);
         px->SetLineColor(kRed);
         //px->SetLineWidth(2);
         //px->SetMarkerStyle(8);
@@ -91,7 +155,7 @@ int plot_HCAL_compare()
         px->GetYaxis()->SetTitle(y_title);
         px->Draw();
 
-        px_list.push_back((TH1F*)px);
+        px_list.push_back(px);
 
         gPad->SetGrid();
 
@@ -114,24 +178,24 @@ int plot_HCAL_compare()
         mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_profile.png");
         //mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_profile.pdf");
 
-        int nBins = px->GetXaxis()->GetNbins();
-        TH1F *SD_h = new TH1F(hist_name + "_SD_h", hist_name + "_SD_h", nBins, xmin, xmax);
-        for(int i = 1; i<= nBins; i++)
+        TProfile* SD_h = (TProfile*)px->Clone(hist_name + "_SD");
+        SD_h->Reset();
+        for(int i = 1; i<= px->GetNbinsX(); i++)
         {
-            float x_center = px->GetBinCenter(i);
-            float error = px->GetBinError(i);
-            float y_center = px->GetBinContent(i);
-            float rel_error = 0;
-            if (y_center > 0) rel_error = error * x_center / y_center;
-            SD_h->SetBinContent(i, rel_error);
-            //if(i < 50) std::cout << i << ", " << x_center << ", " << error << ", " << y_center << ", " << SD_h->GetBinContent(i) << std::endl;
+            auto x_center = px->GetBinCenter(i);
+            auto error = px->GetBinError(i);
+            auto y_center = px->GetBinContent(i);
+            auto SD = error;
+            if (scale_SD && y_center > 0) SD = error * x_center / y_center;
+            SD_h->SetBinContent(i, SD);
+            SD_h->SetBinEntries(i, 1);
         }
         //SD_h->SetTitle("");
         SD_h->GetXaxis()->SetTitle(x_title);
         SD_h->GetYaxis()->SetTitle(SD_title);
         SD_h->GetXaxis()->SetRangeUser(xmin + px_shift, xmax * px_scale);
-        SD_h->GetYaxis()->SetRangeUser(0, 150);
-        SD_h->Draw();
+        SD_h->GetYaxis()->SetRangeUser(SD_min, SD_max);
+        SD_h->Draw("hist");
         SD_list.push_back(SD_h);
         mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_SD.png");
         //mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_SD.pdf");
@@ -142,7 +206,7 @@ int plot_HCAL_compare()
     mycanvas->SetLeftMargin(0.15);
     //mycanvas->SetRightMargin(0.1);
 
-    TLegend* leg = new TLegend(0.7,0.7,0.9,0.9);
+    TLegend* leg = new TLegend(0.65,0.7,0.9,0.9);
 
     for(int i = 0; i < SD_list.size(); i++)
     {
@@ -150,8 +214,8 @@ int plot_HCAL_compare()
         auto my_hist = SD_list.at(i);
         if(overlay_px) my_hist = px_list.at(i);
         my_hist->SetLineColor(color_list.at(i));
-        if(i==0) my_hist->Draw();
-        else my_hist->Draw("same");
+        if(i==0) my_hist->Draw("hist");
+        else my_hist->Draw("histsame");
         leg->AddEntry(my_hist,leg_list.at(i),"l");
     }
     leg->Draw("same");

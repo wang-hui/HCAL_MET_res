@@ -3,30 +3,36 @@
 
 import ROOT as rt
 
-BaseName = "MAHI recHits"
-BaseFileList = ["DoubleMuon_Run2018A_Run_315512_RECO_origin_recHit_plots.root"]
-BaseHistList = ["myCaloMETBE_h", "myCaloMETBE_HB_h", "myCaloMETBE_HE_h"]
+BaseName = "MAHI"
+BaseFileList = ["UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_origin_recHit_plots.root"]
+#BaseHistList = ["myCaloMETBE_h", "myCaloMETBE_HB_h", "myCaloMETBE_HE_h"]
+BaseHistList = ["LeadingCaloJet_nConstituents_h"]
 
-Comp1Name = "DLPHIN recHits"
+Comp1Name = "DLPHIN"
 Comp1FileList = BaseFileList
-Comp1FileList = ["DoubleMuon_Run2018A_Run_315512_RECO_DLPHIN_no_SF_plots.root"]
+Comp1FileList = ["UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_plots.root"]
 Comp1HistList = BaseHistList
 #Comp1HistList = ["myCaloMETBE_HB_h"]
 
-Comp2Name = "DLPHIN no SF"
+Comp2Name = "DLPHIN truncate"
 Comp2FileList = BaseFileList
-Comp2FileList = ["DoubleMuon_Run2018A_Run_315512_RECO_DLPHIN_no_SF_plots.root"]
+Comp2FileList = ["UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_truncate_plots.root"]
 Comp2HistList = BaseHistList
 #Comp2HistList = ["myCaloMETBE_HE_h"]
 
 ShapeComp = True
 
 YTitle = "Events"
-if ShapeComp: YTitle = "A.U."
 XTitle = "MET [GeV]"
+XTitle = "nConstituents"
 
-FileDir = "results_temp/"
+XMin = 0
+XMax = 0
+
+FileDir = "results/"
 HistDir = "myAna/"
+
+if ShapeComp: YTitle = "A.U."
 
 class MyStruct:
     def __init__(self, Name, FileList, HistList, Color, StructList):
@@ -39,7 +45,7 @@ class MyStruct:
 StructList = []
 Base = MyStruct(BaseName, BaseFileList, BaseHistList, rt.kBlack, StructList)
 Comp1 = MyStruct(Comp1Name, Comp1FileList, Comp1HistList, rt.kRed, StructList)
-#Comp2 = MyStruct(Comp2Name, Comp2FileList, Comp2HistList, rt.kBlue, StructList)
+Comp2 = MyStruct(Comp2Name, Comp2FileList, Comp2HistList, rt.kBlue, StructList)
 
 rt.TH1.AddDirectory(rt.kFALSE)
 #rt.TH1.__init__._creates = False
@@ -63,7 +69,6 @@ for i in range(len(BaseFileList)):
 
         OutName = BaseFileList[i].replace(".root", "_")
         BaseHist = None
-        MaxY = 0
 
         for k in range(len(StructList)):
             iFileName = StructList[k].FileList[i]
@@ -81,7 +86,7 @@ for i in range(len(BaseFileList)):
             PadUp.cd()
 
             if k == 0:
-                iHist.GetXaxis().SetRangeUser(0, 50)
+                if XMax != 0: iHist.GetXaxis().SetRangeUser(XMin, XMax)
                 iHist.GetYaxis().SetTitle(YTitle)
                 #iHist.SetTitle("")
                 iHist.Draw("hist")
