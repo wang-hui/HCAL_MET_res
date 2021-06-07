@@ -11,7 +11,7 @@ process.load("Configuration.StandardSequences.GeometryDB_cff")
 process.load("Configuration.StandardSequences.MagneticField_cff")
 
 # global tag
-globalTag = '106X_dataRun2_v28'
+globalTag = '106X_upgrade2018_realistic_v11_L1v1'
 process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
 process.GlobalTag.globaltag = globalTag
 
@@ -29,7 +29,7 @@ if len(sys.argv) == 4:
 
 OutputFile = sys.argv[2].split("/")[-1]
 OutputFile = OutputFile.split(".")[0]
-OutputFile = OutputFile + "_plots.root"
+OutputFile = OutputFile + "_TTree.root"
 #OutputFile = "test_plots.root"
 
 # source
@@ -45,6 +45,6 @@ process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
 )
 process.TFileService = cms.Service("TFileService", fileName = cms.string(OutputFile) )
-process.myAna = cms.EDAnalyzer("HCAL_MET_Ana", PrintChannel = cms.untracked.bool(False), IsMC = cms.untracked.bool(False), RunMod = cms.untracked.string("Zee"))
+process.myAna = cms.EDAnalyzer("HCAL_Jet_Ana", is_run3_relVal = cms.untracked.bool(False), max_simHit_time = cms.untracked.double(125.0))
 
 process.path = cms.Path(process.myAna)

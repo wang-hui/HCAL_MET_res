@@ -16,7 +16,7 @@ process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
 process.GlobalTag.globaltag = globalTag
 
 process.options = cms.untracked.PSet(
-  numberOfThreads=cms.untracked.uint32(2)
+  numberOfThreads=cms.untracked.uint32(1)
 )
 
 f = open(sys.argv[2], "r")
