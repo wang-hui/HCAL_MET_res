@@ -219,10 +219,10 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
     CaloMETBE_phi_vs_PU_h = TFS->make<TH2F>("CaloMETBE_phi_vs_PU_h", "CaloMETBE_phi_vs_PU_h", 100, 0.0, 100.0, 100, -3.2, 3.2);
 
     CaloMETBE_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UPara_ratio_vs_Zpt_h", "CaloMETBE_UPara_ratio_vs_Zpt_h", 20, 0.0, 200.0, 200, -10.0, 10.0);
-    CaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UPara_vs_Zpt_h", "CaloMETBE_UPara_vs_Zpt_h", METResArraySize, METResArray, 200, -500.0, 100.0);
+    CaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UPara_vs_Zpt_h", "CaloMETBE_UPara_vs_Zpt_h", METResArraySize, METResArray, 200, -350.0, 150.0);
     CaloMETBE_UVert_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UVert_vs_Zpt_h", "CaloMETBE_UVert_vs_Zpt_h", METResArraySize, METResArray, 200, -150.0, 150.0);
     myCaloMETBE_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UPara_ratio_vs_Zpt_h", "myCaloMETBE_UPara_ratio_vs_Zpt_h", 20, 0.0, 200.0, 200, -10.0, 10.0);
-    myCaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UPara_vs_Zpt_h", "myCaloMETBE_UPara_vs_Zpt_h", METResArraySize, METResArray, 200, -500.0, 100.0);
+    myCaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UPara_vs_Zpt_h", "myCaloMETBE_UPara_vs_Zpt_h", METResArraySize, METResArray, 200, -350.0, 150.0);
     myCaloMETBE_UVert_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UVert_vs_Zpt_h", "myCaloMETBE_UVert_vs_Zpt_h", METResArraySize, METResArray, 200, -150.0, 150.0);
     if(IsMC_)
     {
@@ -346,7 +346,7 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         edm::Handle<std::vector<reco::PFJet>> PFJetHandle;
         iEvent.getByToken(PFJetToken_, PFJetHandle);
         auto PFJets = PFJetHandle.product();
-        auto HT = calc_ht(*PFJets);
+        auto HT = calc_ht(*PFJets) - SelZ_pt;           //only consider the recoil HT
         HT_h->Fill(HT);
 
         edm::ESHandle<CaloGeometry> CaloGeoHandle;
@@ -403,10 +403,11 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                 }
             }
 
+            //if(Ieta == -25 && Iphi == 41) std::cout << Hid << ", " << RawId << ", " << HBHERecHit.eraw() << ", " << HBHERecHit.eaux() << ", " << Energy << std::endl;
             if(PrintChannel_) std::cout << Hid << ", " << RawId << ", " << SubDet << ", " << Depth << ", " << Ieta << ", " << Eta << ", " << Iphi << ", " << Phi << ", " << Energy << std::endl;
         }
 
-        auto myCaloMETBE = - HBHETotLV;
+        auto myCaloMETBE = - (HBHETotLV + SelZ);
         auto myCaloMETBE_pt = myCaloMETBE.Pt();
         auto myCaloMETBE_phi = myCaloMETBE.Phi();
         myCaloMETBE_h->Fill(myCaloMETBE_pt);

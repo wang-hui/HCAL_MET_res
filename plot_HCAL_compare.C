@@ -5,42 +5,13 @@ int plot_HCAL_compare()
     bool plot_MET_response = false;
     bool plot_MET_resolution = false;
 
-/*
-    std::vector<TString> hist_list =
-    {
-        //"LeadingCaloJet_vs_LeadingGenJet", "LeadingCaloJet_vs_LeadingGenJet", "LeadingCaloJet_vs_LeadingGenJet",
-        //"LeadingCaloJet_vs_LeadingGenJet_HB", "LeadingCaloJet_vs_LeadingGenJet_HB", "LeadingCaloJet_vs_LeadingGenJet_HB",
-        "LeadingCaloJet_vs_LeadingGenJet_HE", "LeadingCaloJet_vs_LeadingGenJet_HE", "LeadingCaloJet_vs_LeadingGenJet_HE",
-        //"CaloJet_vs_GenJet", "CaloJet_vs_GenJet", "CaloJet_vs_GenJet",
-        //"CaloJet_vs_GenJet_etaL", "CaloJet_vs_GenJet_etaL", "CaloJet_vs_GenJet_etaL",
-        //"CaloJet_vs_GenJet_etaM", "CaloJet_vs_GenJet_etaM", "CaloJet_vs_GenJet_etaM",
-        //"CaloJet_vs_GenJet_etaH", "CaloJet_vs_GenJet_etaH", "CaloJet_vs_GenJet_etaH",
-    };
-*/
-
-    std::vector<TString> hist_list(4,
-                                    //"LeadingCaloJet_vs_LeadingGenJet"
-                                    //"LeadingCaloJet_vs_LeadingGenJet_HB"
-                                    //"LeadingCaloJet_vs_LeadingGenJet_HE"
-                                    //"DiJet_CaloJet_vs_GenJet"
-                                    "DiJet_CaloJet_vs_GenJet_HB"
-                                    //"DiJet_CaloJet_vs_GenJet_HE"
-                                    );
-
-    std::vector<TString> file_list = {"UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_origin_recHit_plots", "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_M0_energy_plots"};
-    file_list = {"UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_origin_recHit_plots", "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_M0_energy_plots", "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_plots", "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_scaled_plots"};
-
-    std::vector<TString> leg_list = {"MAHI", "M0"};
-    leg_list = {"MAHI", "M0", "DLPHIN", "DLPHIN scaled"};
-
-    std::vector<int> color_list = {kRed, kBlue};
-    color_list = {kBlack, kRed, kBlue, kViolet};
-
+    std::vector<TString> hist_list, file_list, leg_list;
+    std::vector<int> color_list = {kRed, kBlue, kBlack, kViolet};
     std::vector<TProfile*> SD_list, px_list;
 
-    bool overlay_px = false;
     bool do_fit = true;
-    bool scale_SD = true;
+    bool do_SD = false;
+    bool scale_SD = false;
 
     TString hist_folder = "";
     hist_folder = "myAna";
@@ -48,12 +19,28 @@ int plot_HCAL_compare()
     float px_scale = 0.5;
     float px_shift = 0;
 
-    float SD_min = 0;
-    float SD_max = 120;
+    float y_min = 0;
+    float y_max = 120;
 
     TString x_title = "gen pt [GeV]";
     TString y_title = "reco pt [GeV]";
     TString SD_title = "#sigma_{reco pt} x gen pt / reco pt";
+
+    if (plot_CaloJet_vs_GenJet)
+    {
+        hist_list.assign(4, "DiJet_CaloJet_vs_GenJet_HB");
+        file_list =
+        {
+            "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_origin_recHit_plots",
+            "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_plots",
+            "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_plots",
+            "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_respCorr_PNieta_plots"
+        };
+        leg_list = {"MAHI", "DLPHIN pt1TeV", "DLPHIN p1TeV", "DLPHIN p1TeV respCorr"};
+        do_fit = true;
+        do_SD = true;
+        scale_SD = true;
+    }
 
     if (plot_CaloJet_vs_GenJet_pull)
     {
@@ -66,35 +53,68 @@ int plot_HCAL_compare()
         };
         y_title = "pull";
         SD_title = "pull";
-        overlay_px = true;
+        do_SD = false;
         do_fit = false; 
     }
 
     if (plot_MET_response)
     {
-        file_list = {"UL_EGamma_Run2018B_Run_317392_RECO_origin_recHit_plots", "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_plots", "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_respCorr_plots"};
-        leg_list = {"MAHI", "DLPHIN no respCorr", "DLPHIN with respCorr"};
-        hist_list =
+        /*file_list =
+          {
+          "UL_EGamma_Run2018B_Run_317392_RECO_origin_recHit_plots",
+          "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_plots",
+          "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_respCorr_plots"
+          };*/
+        file_list =
         {
-            "UPara_ratio_vs_Zpt", "UPara_ratio_vs_Zpt", "UPara_ratio_vs_Zpt",
+            "UL_DYJetsToEE_M-50_RECO_PU_mahi_energy_plots",
+            //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_pt1TeV_plots",
+            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_plots",
+            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_plots",
+            //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_truncate_plots"
+            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_JP_respCorr_plots"
         };
+        leg_list = {"MAHI", "DLPHIN", "DLPHIN Sunanda respCorr", "DLPHIN JP respCorr"};
+        //leg_list = {"MAHI", "DLPHIN", "DLPHIN respCorr", "DLPHIN respCorr truncate"};
+        hist_list.assign(4,
+                //"myCaloMETBE_UPara_ratio_vs_Zpt"
+                "CaloMETBE_UPara_ratio_vs_Zpt"
+                );
         px_scale = 1;
-
+        rebin_x = 1;
         x_title = "Z pt [GeV]";
         y_title = "- Upara / Z pt";
-        overlay_px = true;
         do_fit = false; 
+        do_SD = false;
+        y_min = 0;
+        y_max = 2;
     }
 
     if (plot_MET_resolution)
     {
-        file_list = {"UL_EGamma_Run2018B_Run_317392_RECO_origin_recHit_plots", "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_plots", "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_respCorr_plots"};
-        leg_list = {"MAHI", "DLPHIN no respCorr", "DLPHIN with respCorr"};
-        hist_list =
+        /*file_list =
+          {
+          "UL_EGamma_Run2018B_Run_317392_RECO_origin_recHit_plots",
+          "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_plots",
+          "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_respCorr_plots"
+          };*/
+        file_list =
         {
-            "UPara_vs_Zpt", "UPara_vs_Zpt", "UPara_vs_Zpt",
-            //"UVert_vs_Zpt", "UVert_vs_Zpt", "UVert_vs_Zpt",
+            "UL_DYJetsToEE_M-50_RECO_PU_mahi_energy_plots",
+            //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_pt1TeV_plots",
+            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_plots",
+            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_plots",
+            //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_truncate_plots"
+            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_JP_respCorr_plots",
         };
+        leg_list = {"MAHI", "DLPHIN", "DLPHIN Sunanda respCorr", "DLPHIN JP respCorr"};
+        //leg_list = {"MAHI", "DLPHIN", "DLPHIN respCorr", "DLPHIN respCorr truncate"};
+        hist_list.assign(4,
+                //"myCaloMETBE_UPara_vs_Zpt"
+                //"myCaloMETBE_UVert_vs_Zpt"
+                "CaloMETBE_UPara_vs_Zpt"
+                //"CaloMETBE_UVert_vs_Zpt"
+                );
         px_scale = 1;
 
         x_title = "Z pt [GeV]";
@@ -103,9 +123,10 @@ int plot_HCAL_compare()
         //y_title = "Uvert [GeV]";
         //SD_title = "#sigma_{Uvert}";
         do_fit = false;
+        do_SD = true;
         scale_SD = false;
-        SD_min = 0;
-        SD_max = 100;
+        y_min = 0;
+        y_max = 50;
         rebin_x = 1;
         px_shift = 5;
     }
@@ -138,22 +159,16 @@ int plot_HCAL_compare()
 
         mycanvas->SetLeftMargin(0.15);
         mycanvas->SetRightMargin(0.15);
-        mycanvas->SaveAs("plots_temp/" + file_name + "_" + hist_name + ".png");
+        //mycanvas->SaveAs("plots_temp/" + file_name + "_" + hist_name + ".png");
         //mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + ".pdf");
 
         TProfile *px = h1->ProfileX();
-        if(!overlay_px) px->BuildOptions(0, 0, "s");
-        px->SetTitle(hist_name);
-        //px->SetTitle("");
-        //px->GetYaxis()->SetNdivisions(512);
-        px->GetXaxis()->SetRangeUser(xmin + px_shift, xmax * px_scale);
-        //px->GetYaxis()->SetRangeUser(0.5, 2);
+        if(do_SD) px->BuildOptions(0, 0, "s");
+
         px->SetLineColor(kRed);
         //px->SetLineWidth(2);
         //px->SetMarkerStyle(8);
-        px->GetXaxis()->SetTitle(x_title);
-        px->GetYaxis()->SetTitle(y_title);
-        px->Draw();
+        px->Draw("same");
 
         px_list.push_back(px);
 
@@ -170,7 +185,7 @@ int plot_HCAL_compare()
                 f->SetLineStyle(2); // 2 = "- - -"
             }
 
-            TLine *l=new TLine(xmin + px_shift, ymin + px_shift, xmax * px_scale, ymax * px_scale);
+            TLine *l=new TLine(xmin, ymin, xmax, ymax);
             l->SetLineColor(kBlack);
             if(!hist_name.Contains("err"))
             {l->Draw("same");}
@@ -178,27 +193,29 @@ int plot_HCAL_compare()
         mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_profile.png");
         //mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_profile.pdf");
 
-        TProfile* SD_h = (TProfile*)px->Clone(hist_name + "_SD");
-        SD_h->Reset();
-        for(int i = 1; i<= px->GetNbinsX(); i++)
+        if(do_SD)
         {
-            auto x_center = px->GetBinCenter(i);
-            auto error = px->GetBinError(i);
-            auto y_center = px->GetBinContent(i);
-            auto SD = error;
-            if (scale_SD && y_center > 0) SD = error * x_center / y_center;
-            SD_h->SetBinContent(i, SD);
-            SD_h->SetBinEntries(i, 1);
+            TProfile* SD_h = (TProfile*)px->Clone(hist_name + "_SD");
+            SD_h->Reset();
+            for(int i = 1; i<= px->GetNbinsX(); i++)
+            {
+                auto x_center = px->GetBinCenter(i);
+                auto error = px->GetBinError(i);
+                auto y_center = px->GetBinContent(i);
+                auto SD = error;
+                if (scale_SD && y_center > 0) SD = error * x_center / y_center;
+                SD_h->SetBinContent(i, SD);
+                SD_h->SetBinEntries(i, 1);
+            }
+            //SD_h->SetTitle("");
+            SD_h->GetXaxis()->SetTitle(x_title);
+            SD_h->GetYaxis()->SetTitle(SD_title);
+            SD_h->GetXaxis()->SetRangeUser(xmin + px_shift, xmax * px_scale);
+            SD_h->Draw("hist");
+            SD_list.push_back(SD_h);
+            mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_SD.png");
+            //mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_SD.pdf");
         }
-        //SD_h->SetTitle("");
-        SD_h->GetXaxis()->SetTitle(x_title);
-        SD_h->GetYaxis()->SetTitle(SD_title);
-        SD_h->GetXaxis()->SetRangeUser(xmin + px_shift, xmax * px_scale);
-        SD_h->GetYaxis()->SetRangeUser(SD_min, SD_max);
-        SD_h->Draw("hist");
-        SD_list.push_back(SD_h);
-        mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_SD.png");
-        //mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_SD.pdf");
     }
 
     TCanvas* mycanvas = new TCanvas("mycanvas", "mycanvas", 600, 600);
@@ -208,21 +225,30 @@ int plot_HCAL_compare()
 
     TLegend* leg = new TLegend(0.65,0.7,0.9,0.9);
 
-    for(int i = 0; i < SD_list.size(); i++)
+    for(int i = 0; i < px_list.size(); i++)
     {
         //std::cout << SD_list.at(i) << std::endl;
-        auto my_hist = SD_list.at(i);
-        if(overlay_px) my_hist = px_list.at(i);
+        auto my_hist = px_list.at(i);
+        if(do_SD) my_hist = SD_list.at(i);
         my_hist->SetLineColor(color_list.at(i));
-        if(i==0) my_hist->Draw("hist");
-        else my_hist->Draw("histsame");
+        my_hist->GetYaxis()->SetRangeUser(y_min, y_max);
+        if(do_SD)
+        {
+            if(i==0) my_hist->Draw("hist");
+            else my_hist->Draw("histsame");
+        }
+        else
+        {
+            if(i==0) my_hist->Draw("");
+            else my_hist->Draw("same");
+        }
         leg->AddEntry(my_hist,leg_list.at(i),"l");
     }
     leg->Draw("same");
     gPad->SetGrid();
 
-    TString postfix = "_SD";
-    if(overlay_px) postfix = "_px";
+    TString postfix = "_px";
+    if(do_SD) postfix = "_SD";
 
     mycanvas->SaveAs("plots_temp/" + hist_list.at(0) + postfix + ".png");
     //mycanvas->SaveAs("plots_temp/" + hist_list.at(0) + postfix + ".pdf");

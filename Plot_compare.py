@@ -3,31 +3,32 @@
 
 import ROOT as rt
 
-BaseName = "MAHI"
-BaseFileList = ["UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_origin_recHit_plots.root"]
-#BaseHistList = ["myCaloMETBE_h", "myCaloMETBE_HB_h", "myCaloMETBE_HE_h"]
-BaseHistList = ["LeadingCaloJet_nConstituents_h"]
+BaseName = "CaloMET"
+BaseFileList = ["UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_plots.root"]
+BaseHistList = ["CaloMET_h"]
+#BaseHistList = ["LeadingCaloJet_nConstituents_h"]
 
-Comp1Name = "DLPHIN"
+Comp1Name = "CaloMETBE"
 Comp1FileList = BaseFileList
-Comp1FileList = ["UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_plots.root"]
+#Comp1FileList = ["UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_plots.root"]
 Comp1HistList = BaseHistList
-#Comp1HistList = ["myCaloMETBE_HB_h"]
+Comp1HistList = ["CaloMETBE_h"]
 
-Comp2Name = "DLPHIN truncate"
+Comp2Name = "HBHE recHits MET"
 Comp2FileList = BaseFileList
-Comp2FileList = ["UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_truncate_plots.root"]
+#Comp2FileList = ["UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_truncate_plots.root"]
 Comp2HistList = BaseHistList
-#Comp2HistList = ["myCaloMETBE_HE_h"]
+Comp2HistList = ["myCaloMETBE_h"]
 
 ShapeComp = True
 
 YTitle = "Events"
 XTitle = "MET [GeV]"
-XTitle = "nConstituents"
+#XTitle = "nConstituents"
 
 XMin = 0
-XMax = 0
+XMax = 100
+YScale = 2.0
 
 FileDir = "results/"
 HistDir = "myAna/"
@@ -86,9 +87,15 @@ for i in range(len(BaseFileList)):
             PadUp.cd()
 
             if k == 0:
-                if XMax != 0: iHist.GetXaxis().SetRangeUser(XMin, XMax)
+                XMinTemp = iHist.GetXaxis().GetXmin()
+                XMaxTemp = iHist.GetXaxis().GetXmax()
+                if XMax > 0:
+                    XMinTemp = XMin
+                    XMaxTemp = XMax
+                iHist.GetXaxis().SetRangeUser(XMinTemp, XMaxTemp)
                 iHist.GetYaxis().SetTitle(YTitle)
-                #iHist.SetTitle("")
+                iHist.SetMaximum(iHist.GetMaximum() * YScale)
+                iHist.SetTitle("")
                 iHist.Draw("hist")
                 BaseHist = iHist.Clone()
 
@@ -110,7 +117,7 @@ for i in range(len(BaseFileList)):
                 BaseFrame.GetXaxis().SetLabelSize(0.08)
                 BaseFrame.Draw()
 
-                MyLine = rt.TLine(0, 1.0, 50, 1.0)
+                MyLine = rt.TLine(XMinTemp, 1.0, XMaxTemp, 1.0)
                 MyLine.Draw()
             else:
                 iHist.Draw("histsame")
