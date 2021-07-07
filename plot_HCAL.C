@@ -1,11 +1,19 @@
 int plot_HCAL()
 {
-    TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_origin_recHit_plots";
-    //file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_M0_energy_plots";
-    //file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_plots";
-    //file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_truncate_plots";
-    //file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_scaled_plots";
-    //file_name = "UL_1TeV_pion_gun_RECO_noPU_mahi_energy_plots";
+    //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_origin_recHit_plots";
+    //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_M0_energy_plots";
+    //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_plots";
+    //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_truncate_plots";
+    //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_scaled_plots";
+    //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_plots";
+    //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_respCorr_PNieta_plots";
+    //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_JP_respCorr_plots";
+    //TString file_name = "UL_1TeV_pion_gun_RECO_noPU_mahi_energy_plots";
+
+    //TString file_name = "UL_QCD_HT2000toInf_RECO_default_recHits_plots";
+    //TString file_name = "UL_QCD_HT2000toInf_RECO_DLPHIN_p1TeV_plots";
+    //TString file_name = "UL_QCD_HT2000toInf_RECO_DLPHIN_p1TeV_Sunanda_respCorr_plots";
+    TString file_name = "UL_QCD_HT2000toInf_RECO_DLPHIN_p1TeV_JP_respCorr_plots";
 
     bool plot_MET = false;
     bool plot_METphi = false;
@@ -16,8 +24,8 @@ int plot_HCAL()
     bool plot_CaloJet_vs_GenJet = false;
     bool plot_CaloJet_vs_GenJet_pull = false;
     bool plot_CaloTowerET_vs_eta = false;
-    bool plot_leading_jet_ratio = false;
-    bool plot_dijet_mass = true;
+    bool plot_leading_jet_ratio = true;
+    bool plot_dijet_mass = false;
 
     bool plot_2D = false;
     bool plot_1D = false;
@@ -113,7 +121,8 @@ int plot_HCAL()
         hist_list = 
         {
             //"LeadingCaloJet_ratio"
-            "DiJet_ratio", "DiJet_ratio_HB", "DiJet_ratio_HE"
+            "DiJet_CaloJet_ratio", "DiJet_CaloJet_ratio_HB", "DiJet_CaloJet_ratio_HE", "DiJet_CaloJet_ratio_ieta_1516",
+            "DiJet_PFJet_ratio", "DiJet_PFJet_ratio_HB", "DiJet_PFJet_ratio_HE", "DiJet_PFJet_ratio_ieta_1516"
         };
 
         plot_ratio = true;
@@ -134,6 +143,7 @@ int plot_HCAL()
         hist_list = 
         {
             "DiJet_CaloJet_mass", "DiJet_CaloJet_mass_BB", "DiJet_CaloJet_mass_EE", "DiJet_CaloJet_mass_BE"
+            //"DiJet_PFJet_mass", "DiJet_PFJet_mass_BB", "DiJet_PFJet_mass_EE", "DiJet_PFJet_mass_BE"
         };
 
         plot_ratio = true;
@@ -192,7 +202,9 @@ int plot_HCAL()
         hist_list = 
         {
             //"CaloJet_vs_GenJet", "CaloJet_vs_GenJet_etaL", "CaloJet_vs_GenJet_etaM", "CaloJet_vs_GenJet_etaH"
-            "DiJet_CaloJet_vs_GenJet_HB", "DiJet_CaloJet_vs_GenJet_HE"
+            //"DiJet_CaloJet_vs_GenJet_HB", "DiJet_CaloJet_vs_GenJet_HE"
+            //"DiJet_PFJet_vs_GenJet_HB", "DiJet_PFJet_vs_GenJet_HE"
+            "DiJet_CaloJet_vs_GenJet_ieta_1516", "DiJet_PFJet_vs_GenJet_ieta_1516"
         };
 
         plot_2D = true;
@@ -369,7 +381,7 @@ int plot_HCAL()
             if(max_bin != 1)
             {h1_mean = h1->GetXaxis()->GetBinCenter(max_bin);}
             //std::cout << h1_mean << ", " << h1_std << std::endl;
-            h1->Fit("gaus", "", "", h1_mean - 1.5 * h1_std, h1_mean + 1.5 * h1_std);
+            h1->Fit("gaus", "0", "", h1_mean - 1.5 * h1_std, h1_mean + 1.5 * h1_std);
             auto f1 = h1->GetFunction("gaus");
             auto c = f1->GetParameter(0);
             auto mu = f1->GetParameter(1);
@@ -377,7 +389,16 @@ int plot_HCAL()
             auto c_err = f1->GetParError(0);
             auto mu_err = f1->GetParError(1);
             auto sigma_err = f1->GetParError(2);
-            //std::cout << c << ", " << mu << ", " << sigma << std::endl;
+            std::cout << c << ", " << mu << ", " << sigma << std::endl;
+
+            h1->Fit("gaus", "", "", mu - 1.5 * sigma, mu + 1.5 * sigma);
+            f1 = h1->GetFunction("gaus");
+            c = f1->GetParameter(0);
+            mu = f1->GetParameter(1);
+            sigma = f1->GetParameter(2);
+            c_err = f1->GetParError(0);
+            mu_err = f1->GetParError(1);
+            sigma_err = f1->GetParError(2);
 
             std::stringstream s1;
             s1 << "#bf{#mu = " << std::setprecision(3) << mu << " #pm " << mu_err << "}";
