@@ -7,13 +7,19 @@ int plot_HCAL()
     //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_scaled_plots";
     //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_plots";
     //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_respCorr_PNieta_plots";
+    //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_respCorr_ZeroOut_plots";
     //TString file_name = "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_JP_respCorr_plots";
     //TString file_name = "UL_1TeV_pion_gun_RECO_noPU_mahi_energy_plots";
 
     //TString file_name = "UL_QCD_HT2000toInf_RECO_default_recHits_plots";
     //TString file_name = "UL_QCD_HT2000toInf_RECO_DLPHIN_p1TeV_plots";
     //TString file_name = "UL_QCD_HT2000toInf_RECO_DLPHIN_p1TeV_Sunanda_respCorr_plots";
-    TString file_name = "UL_QCD_HT2000toInf_RECO_DLPHIN_p1TeV_JP_respCorr_plots";
+    //TString file_name = "UL_QCD_HT2000toInf_RECO_DLPHIN_p1TeV_JP_respCorr_plots";
+
+    //TString file_name = "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_mahi_energy_plots";
+    //TString file_name = "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_plots";
+    //TString file_name = "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_plots";
+    TString file_name = "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_zeroOut_plots";
 
     bool plot_MET = false;
     bool plot_METphi = false;
@@ -24,8 +30,10 @@ int plot_HCAL()
     bool plot_CaloJet_vs_GenJet = false;
     bool plot_CaloJet_vs_GenJet_pull = false;
     bool plot_CaloTowerET_vs_eta = false;
-    bool plot_leading_jet_ratio = true;
+    bool plot_leading_jet_ratio = false;
     bool plot_dijet_mass = false;
+    bool plot_UPara = false;
+    bool plot_UVert = true;
 
     bool plot_2D = false;
     bool plot_1D = false;
@@ -35,6 +43,7 @@ int plot_HCAL()
     bool plot_log = false;
     bool profile_SD = false;
     bool set_SD_range = false;
+    bool compare_to_one = false;
 
     TFile *f1 = new TFile("results/" + file_name + ".root");
 
@@ -122,7 +131,7 @@ int plot_HCAL()
         {
             //"LeadingCaloJet_ratio"
             "DiJet_CaloJet_ratio", "DiJet_CaloJet_ratio_HB", "DiJet_CaloJet_ratio_HE", "DiJet_CaloJet_ratio_ieta_1516",
-            "DiJet_PFJet_ratio", "DiJet_PFJet_ratio_HB", "DiJet_PFJet_ratio_HE", "DiJet_PFJet_ratio_ieta_1516"
+            //"DiJet_PFJet_ratio", "DiJet_PFJet_ratio_HB", "DiJet_PFJet_ratio_HE", "DiJet_PFJet_ratio_ieta_1516"
         };
 
         plot_ratio = true;
@@ -154,6 +163,46 @@ int plot_HCAL()
         //ymax = 60;
 
         x_title = "di-jet mass [GeV]";
+        //y_title = "";
+    }
+
+    if(plot_UPara)
+    {
+        hist_dir = "myAna/";
+
+        hist_list = 
+        {
+            "CaloMETBE_UPara", "myCaloMETBE_UPara", "PFMET_UPara"
+        };
+
+        plot_ratio = true;
+        //plot_log = true;
+        //plot_underflow_overflow_bins = true;
+
+        //ymin = 0;
+        //ymax = 60;
+
+        x_title = "UPara [GeV]";
+        //y_title = "";
+    }
+
+    if(plot_UVert)
+    {
+        hist_dir = "myAna/";
+
+        hist_list = 
+        {
+            "CaloMETBE_UVert", "myCaloMETBE_UVert", "PFMET_UVert"
+        };
+
+        plot_ratio = true;
+        //plot_log = true;
+        //plot_underflow_overflow_bins = true;
+
+        //ymin = 0;
+        //ymax = 60;
+
+        x_title = "UVert [GeV]";
         //y_title = "";
     }
 
@@ -375,6 +424,7 @@ int plot_HCAL()
             //gStyle->SetOptStat(kFALSE);
 
             h1->Draw("e");
+            auto h1_entry = h1->GetEntries();
             auto h1_mean = h1->GetMean();
             auto h1_std = h1->GetStdDev();
             auto max_bin = h1->GetMaximumBin();
@@ -409,17 +459,23 @@ int plot_HCAL()
             std::stringstream s3;
             s3 << "#bf{#sigma / #mu = " << std::setprecision(3) << sigma / mu << "}";
             TString TS3 = s3.str();
+            std::stringstream s4;
+            s4 << "#bf{A / N = " << std::setprecision(3) << c / h1_entry << "}";
+            TString TS4 = s4.str();
 
             h1->GetXaxis()->SetTitle(x_title);
             if(plot_underflow_overflow_bins) h1->GetXaxis()->SetRange(0, h1->GetNbinsX() + 1);
-            else h1->GetXaxis()->SetRangeUser(0.5,1.5);
             h1->SetTitle(hist_name);
             h1->GetYaxis()->SetTitle(y_title);
             //gPad->SetLogz();
 
-            TLine *l = new TLine(1, h1->GetMinimum(),1, h1->GetMaximum());
-            l->SetLineColor(kBlack);
-            l->Draw("same");
+            if(compare_to_one)
+            {
+                h1->GetXaxis()->SetRangeUser(0.5,1.5);
+                TLine *l = new TLine(1, h1->GetMinimum(),1, h1->GetMaximum());
+                l->SetLineColor(kBlack);
+                l->Draw("same");
+            }
 
             TLatex latex;
             latex.SetTextSize(0.04);
@@ -427,6 +483,7 @@ int plot_HCAL()
             latex.DrawLatex(0.6,0.7,TS1);
             latex.DrawLatex(0.6,0.65,TS2);
             latex.DrawLatex(0.6,0.6,TS3);
+            latex.DrawLatex(0.6,0.55,TS4);
 
             mycanvas->SetLeftMargin(0.15);
             mycanvas->SetRightMargin(0.1);

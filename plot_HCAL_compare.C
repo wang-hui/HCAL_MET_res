@@ -1,12 +1,13 @@
 int plot_HCAL_compare()
 {
-    bool plot_CaloJet_vs_GenJet = true;
+    bool plot_CaloJet_vs_GenJet = false;
     bool plot_CaloJet_vs_GenJet_pull = false;
-    bool plot_MET_response = false;
+    bool plot_MET_response = true;
     bool plot_MET_resolution = false;
+    bool plot_PU_offset = false;
 
     std::vector<TString> hist_list, file_list, leg_list;
-    std::vector<int> color_list = {kRed, kBlue, kBlack, kViolet};
+    std::vector<int> color_list = {kRed, kBlue, kGreen+1, kYellow+1};
     std::vector<TProfile*> SD_list, px_list;
 
     bool do_fit = true;
@@ -67,18 +68,26 @@ int plot_HCAL_compare()
           };*/
         file_list =
         {
+            /*
             "UL_DYJetsToEE_M-50_RECO_PU_mahi_energy_plots",
             //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_pt1TeV_plots",
             "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_plots",
             "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_plots",
             //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_truncate_plots"
-            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_JP_respCorr_plots"
+            //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_JP_respCorr_plots"
+            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_ZeroOut_plots"
+            */
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_mahi_energy_plots",
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_plots",
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_plots",
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_zeroOut_plots"
         };
-        leg_list = {"MAHI", "DLPHIN", "DLPHIN Sunanda respCorr", "DLPHIN JP respCorr"};
-        //leg_list = {"MAHI", "DLPHIN", "DLPHIN respCorr", "DLPHIN respCorr truncate"};
+        //leg_list = {"MAHI", "DLPHIN", "DLPHIN Sunanda respCorr", "DLPHIN JP respCorr"};
+        leg_list = {"MAHI", "DLPHIN", "DLPHIN respCorr", "DLPHIN respCorr ZeroOut"};
         hist_list.assign(4,
                 //"myCaloMETBE_UPara_ratio_vs_Zpt"
                 "CaloMETBE_UPara_ratio_vs_Zpt"
+                //"PFMET_UPara_ratio_vs_Zpt"
                 );
         px_scale = 1;
         rebin_x = 1;
@@ -100,20 +109,29 @@ int plot_HCAL_compare()
           };*/
         file_list =
         {
+            /*
             "UL_DYJetsToEE_M-50_RECO_PU_mahi_energy_plots",
             //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_pt1TeV_plots",
             "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_plots",
             "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_plots",
             //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_truncate_plots"
-            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_JP_respCorr_plots",
+            //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_JP_respCorr_plots",
+            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_ZeroOut_plots"
+            */
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_mahi_energy_plots",
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_plots",
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_plots",
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_zeroOut_plots"
         };
-        leg_list = {"MAHI", "DLPHIN", "DLPHIN Sunanda respCorr", "DLPHIN JP respCorr"};
-        //leg_list = {"MAHI", "DLPHIN", "DLPHIN respCorr", "DLPHIN respCorr truncate"};
+        //leg_list = {"MAHI", "DLPHIN", "DLPHIN Sunanda respCorr", "DLPHIN JP respCorr"};
+        leg_list = {"MAHI", "DLPHIN", "DLPHIN respCorr", "DLPHIN respCorr ZeroOut"};
         hist_list.assign(4,
                 //"myCaloMETBE_UPara_vs_Zpt"
-                //"myCaloMETBE_UVert_vs_Zpt"
                 "CaloMETBE_UPara_vs_Zpt"
+                //"PFMET_UPara_vs_Zpt"
+                //"myCaloMETBE_UVert_vs_Zpt"
                 //"CaloMETBE_UVert_vs_Zpt"
+                //"PFMET_UVert_vs_Zpt"
                 );
         px_scale = 1;
 
@@ -126,9 +144,34 @@ int plot_HCAL_compare()
         do_SD = true;
         scale_SD = false;
         y_min = 0;
-        y_max = 50;
+        y_max = 100;
         rebin_x = 1;
-        px_shift = 5;
+        px_shift = 50;
+    }
+
+    if (plot_PU_offset)
+    {
+        file_list =
+        {
+            "UL_MinBias_RECO_mahi_energy_plots",
+            "UL_MinBias_RECO_DLPHIN_plots",
+            "UL_MinBias_RECO_DLPHIN_respCorr_plots",
+            "UL_MinBias_RECO_DLPHIN_respCorr_ZeroOut_plots"
+        };
+        //leg_list = {"MAHI", "DLPHIN", "DLPHIN Sunanda respCorr", "DLPHIN JP respCorr"};
+        leg_list = {"MAHI", "DLPHIN", "DLPHIN respCorr", "DLPHIN respCorr ZeroOut"};
+        hist_list.assign(4,
+                //"CaloTowerET_vs_eta"
+                "CaloTowerHadET_vs_eta"
+                );
+        px_scale = 1;
+        rebin_x = 1;
+        x_title = "#eta";
+        y_title = "tower ET / PU";
+        do_fit = false; 
+        do_SD = false;
+        y_min = 0;
+        y_max = 1;
     }
 
     for(int i = 0; i < hist_list.size(); i++)
@@ -166,6 +209,7 @@ int plot_HCAL_compare()
         if(do_SD) px->BuildOptions(0, 0, "s");
 
         px->SetLineColor(kRed);
+        px->GetYaxis()->SetTitle(y_title);
         //px->SetLineWidth(2);
         //px->SetMarkerStyle(8);
         px->Draw("same");
