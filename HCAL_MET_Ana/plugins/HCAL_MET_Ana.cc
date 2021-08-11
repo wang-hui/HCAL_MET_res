@@ -88,6 +88,7 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
         bool PrintChannel_;
         bool IsMC_;
         std::string RunMod_;
+        bool IsHighPtZ_;
 
         edm::EDGetTokenT<HBHERecHitCollection> HBHERecHitsToken_;
         edm::EDGetTokenT<CaloTowerCollection> CaloTowersToken_;
@@ -121,7 +122,7 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
         TH1F * DiJet_CaloJet_mass_h, * DiJet_GenJet_mass_h;
         TH1F * DiJet_CaloJet_mass_BB_h, * DiJet_CaloJet_mass_EE_h, * DiJet_CaloJet_mass_BE_h;
-        TH1F * DiJet_CaloJet_ratio_h, * DiJet_CaloJet_ratio_HB_h, * DiJet_CaloJet_ratio_HE_h, * DiJet_CaloJet_ratio_ieta_1516_h;
+        TH1F * DiJet_CaloJet_ratio_h, * DiJet_CaloJet_ratio_HB_h, * DiJet_CaloJet_ratio_HE_h, * DiJet_CaloJet_ratio_ieta_1516_h, * DiJet_CaloJet_ratio_ieta_18_h, * DiJet_CaloJet_ratio_ieta_2729_h;
 
         TH1F * DiJet_PFJet_mass_h;
         TH1F * DiJet_PFJet_mass_BB_h, * DiJet_PFJet_mass_EE_h, * DiJet_PFJet_mass_BE_h;
@@ -136,7 +137,7 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
         TH1F * myCaloMETBE_UPara_h, * myCaloMETBE_UVert_h;
         TH2F * myCaloMETBE_UPara_ratio_vs_Zpt_h, * myCaloMETBE_UPara_vs_Zpt_h, * myCaloMETBE_UVert_vs_Zpt_h;
         TH1F * PFMET_UPara_h, * PFMET_UVert_h;
-        TH2F * PFMET_UPara_ratio_vs_Zpt_h, * PFMET_UPara_vs_Zpt_h, * PFMET_UVert_vs_Zpt_h;
+        TH2F * PFMET_UPara_ratio_vs_Zpt_h, * PFMET_UPara_ratio_vs_Zpt_LPU_h, * PFMET_UPara_vs_Zpt_h, * PFMET_UVert_vs_Zpt_h;
         TH2F * myCaloETBE_vs_eta_h;
         TH2F * CaloTowerET_vs_eta_h, * CaloTowerEMET_vs_eta_h, * CaloTowerHadET_vs_eta_h;
         TH2F * LeadingCaloJet_vs_LeadingGenJet_h, * LeadingCaloJet_vs_LeadingGenJet_HB_h, * LeadingCaloJet_vs_LeadingGenJet_HE_h;
@@ -164,11 +165,12 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
     PrintChannel_(iConfig.getUntrackedParameter<bool>("PrintChannel")),
     IsMC_(iConfig.getUntrackedParameter<bool>("IsMC")),
-    RunMod_(iConfig.getUntrackedParameter<std::string>("RunMod"))
+    RunMod_(iConfig.getUntrackedParameter<std::string>("RunMod")),
+    IsHighPtZ_(iConfig.getUntrackedParameter<bool>("IsHighPtZ"))
 {
     if(RunMod_ != "Zmumu" && RunMod_ != "Zee")
     {std::cout << "RunMod is not Zmumu or Zee, set PassZSel to true" << std::endl;}
-    else {std::cout << "RunMod is " << RunMod_ << std::endl;}
+    else {std::cout << "RunMod is " << RunMod_ << ", IsHighPtZ = " << IsHighPtZ_ << std::endl;}
 
 
     //now do what ever initialization is needed
@@ -221,40 +223,56 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
     myCaloETBE_h = TFS->make<TH1F>("myCaloETBE_h", "myCaloETBE_h", 200, 0.0, 1000.0);
     myCaloETBE1_h = TFS->make<TH1F>("myCaloETBE1_h", "myCaloETBE1_h", 200, 0.0, 1000.0);
 
-    CaloTowerET_vs_eta_h = TFS->make<TH2F>("CaloTowerET_vs_eta_h", "CaloTowerET_vs_eta_h", 100, -5.0, 5.0, 200, 0.0, 5.0);
-    CaloTowerEMET_vs_eta_h = TFS->make<TH2F>("CaloTowerEMET_vs_eta_h", "CaloTowerEMET_vs_eta_h", 100, -5.0, 5.0, 200, 0.0, 5.0);
-    CaloTowerHadET_vs_eta_h = TFS->make<TH2F>("CaloTowerHadET_vs_eta_h", "CaloTowerHadET_vs_eta_h", 100, -5.0, 5.0, 200, 0.0, 5.0);
+    CaloTowerET_vs_eta_h = TFS->make<TH2F>("CaloTowerET_vs_eta_h", "CaloTowerET_vs_eta_h", 30, -3.0, 3.0, 200, 0.0, 5.0);
+    CaloTowerEMET_vs_eta_h = TFS->make<TH2F>("CaloTowerEMET_vs_eta_h", "CaloTowerEMET_vs_eta_h", 30, -3.0, 3.0, 200, 0.0, 5.0);
+    CaloTowerHadET_vs_eta_h = TFS->make<TH2F>("CaloTowerHadET_vs_eta_h", "CaloTowerHadET_vs_eta_h", 30, -3.0, 3.0, 200, 0.0, 5.0);
     myCaloETBE_vs_eta_h = TFS->make<TH2F>("myCaloETBE_vs_eta_h", "myCaloETBE_vs_eta_h", 60, -3.0, 3.0, 200, 0.0, 1.0);
     CaloMETBE_vs_PU_h = TFS->make<TH2F>("CaloMETBE_vs_PU_h", "CaloMETBE_vs_PU_h", 100, 0.0, 100.0, 100, 0.0, 200.0);
     CaloMETBE_phi_vs_PU_h = TFS->make<TH2F>("CaloMETBE_phi_vs_PU_h", "CaloMETBE_phi_vs_PU_h", 100, 0.0, 100.0, 100, -3.2, 3.2);
 
-/*
-    //binning for low pt Z
-    CaloMETBE_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UPara_ratio_vs_Zpt_h", "CaloMETBE_UPara_ratio_vs_Zpt_h", 20, 0.0, 200.0, 200, -10.0, 10.0);
-    CaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UPara_vs_Zpt_h", "CaloMETBE_UPara_vs_Zpt_h", METResArraySize, METResArray, 200, -350.0, 150.0);
-    CaloMETBE_UVert_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UVert_vs_Zpt_h", "CaloMETBE_UVert_vs_Zpt_h", METResArraySize, METResArray, 200, -150.0, 150.0);
-    myCaloMETBE_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UPara_ratio_vs_Zpt_h", "myCaloMETBE_UPara_ratio_vs_Zpt_h", 20, 0.0, 200.0, 200, -10.0, 10.0);
-    myCaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UPara_vs_Zpt_h", "myCaloMETBE_UPara_vs_Zpt_h", METResArraySize, METResArray, 200, -350.0, 150.0);
-    myCaloMETBE_UVert_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UVert_vs_Zpt_h", "myCaloMETBE_UVert_vs_Zpt_h", METResArraySize, METResArray, 200, -150.0, 150.0);
-*/
-    //binning for high pt Z
-    CaloMETBE_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UPara_ratio_vs_Zpt_h", "CaloMETBE_UPara_ratio_vs_Zpt_h", 20, 100.0, 500.0, 200, -2.0, 4.0);
-    CaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UPara_vs_Zpt_h", "CaloMETBE_UPara_vs_Zpt_h", 20, 100.0, 500.0, 200, -600.0, 100.0);
-    CaloMETBE_UVert_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UVert_vs_Zpt_h", "CaloMETBE_UVert_vs_Zpt_h", 20, 100.0, 500.0, 200, -150.0, 150.0);
-    CaloMETBE_UPara_h = TFS->make<TH1F>("CaloMETBE_UPara_h", "CaloMETBE_UPara_h", 100, -300, 100.0);
-    CaloMETBE_UVert_h = TFS->make<TH1F>("CaloMETBE_UVert_h", "CaloMETBE_UVert_h", 100, -150, 150.0);
+    if (!IsHighPtZ_)
+    {
+        CaloMETBE_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UPara_ratio_vs_Zpt_h", "CaloMETBE_UPara_ratio_vs_Zpt_h", 20, 0.0, 200.0, 200, -10.0, 10.0);
+        CaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UPara_vs_Zpt_h", "CaloMETBE_UPara_vs_Zpt_h", METResArraySize, METResArray, 200, -350.0, 150.0);
+        CaloMETBE_UVert_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UVert_vs_Zpt_h", "CaloMETBE_UVert_vs_Zpt_h", METResArraySize, METResArray, 200, -150.0, 150.0);
+        CaloMETBE_UPara_h = TFS->make<TH1F>("CaloMETBE_UPara_h", "CaloMETBE_UPara_h", 100, -100, 100.0);
+        CaloMETBE_UVert_h = TFS->make<TH1F>("CaloMETBE_UVert_h", "CaloMETBE_UVert_h", 100, -100, 100.0);
 
-    myCaloMETBE_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UPara_ratio_vs_Zpt_h", "myCaloMETBE_UPara_ratio_vs_Zpt_h", 20, 100.0, 500.0, 200, -2.0, 4.0);
-    myCaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UPara_vs_Zpt_h", "myCaloMETBE_UPara_vs_Zpt_h", 20, 100.0, 500.0, 200, -350.0, 150.0);
-    myCaloMETBE_UVert_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UVert_vs_Zpt_h", "myCaloMETBE_UVert_vs_Zpt_h", 20, 100.0, 500.0, 200, -150.0, 150.0);
-    myCaloMETBE_UPara_h = TFS->make<TH1F>("myCaloMETBE_UPara_h", "myCaloMETBE_UPara_h", 100, -300, 100.0);
-    myCaloMETBE_UVert_h = TFS->make<TH1F>("myCaloMETBE_UVert_h", "myCaloMETBE_UVert_h", 100, -150, 150.0);
+        myCaloMETBE_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UPara_ratio_vs_Zpt_h", "myCaloMETBE_UPara_ratio_vs_Zpt_h", 20, 0.0, 200.0, 200, -10.0, 10.0);
+        myCaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UPara_vs_Zpt_h", "myCaloMETBE_UPara_vs_Zpt_h", METResArraySize, METResArray, 200, -350.0, 150.0);
+        myCaloMETBE_UVert_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UVert_vs_Zpt_h", "myCaloMETBE_UVert_vs_Zpt_h", METResArraySize, METResArray, 200, -150.0, 150.0);
+        myCaloMETBE_UPara_h = TFS->make<TH1F>("myCaloMETBE_UPara_h", "myCaloMETBE_UPara_h", 100, -100, 100.0);
+        myCaloMETBE_UVert_h = TFS->make<TH1F>("myCaloMETBE_UVert_h", "myCaloMETBE_UVert_h", 100, -100, 100.0);
 
-    PFMET_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("PFMET_UPara_ratio_vs_Zpt_h", "PFMET_UPara_ratio_vs_Zpt_h", 20, 100.0, 500.0, 200, -2.0, 4.0);
-    PFMET_UPara_vs_Zpt_h = TFS->make<TH2F>("PFMET_UPara_vs_Zpt_h", "PFMET_UPara_vs_Zpt_h", 20, 100.0, 500.0, 200, -700.0, 0.0);
-    PFMET_UVert_vs_Zpt_h = TFS->make<TH2F>("PFMET_UVert_vs_Zpt_h", "PFMET_UVert_vs_Zpt_h", 20, 100.0, 500.0, 200, -150.0, 150.0);
-    PFMET_UPara_h = TFS->make<TH1F>("PFMET_UPara_h", "PFMET_UPara_h", 100, -300, 0.0);
-    PFMET_UVert_h = TFS->make<TH1F>("PFMET_UVert_h", "PFMET_UVert_h", 100, -150, 150.0);
+        PFMET_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("PFMET_UPara_ratio_vs_Zpt_h", "PFMET_UPara_ratio_vs_Zpt_h", 20, 0.0, 200.0, 200, -10.0, 10.0);
+        PFMET_UPara_ratio_vs_Zpt_LPU_h = TFS->make<TH2F>("PFMET_UPara_ratio_vs_Zpt_LPU_h", "PFMET_UPara_ratio_vs_Zpt_LPU_h", 20, 0.0, 200.0, 200, -10.0, 10.0);
+        PFMET_UPara_vs_Zpt_h = TFS->make<TH2F>("PFMET_UPara_vs_Zpt_h", "PFMET_UPara_vs_Zpt_h", METResArraySize, METResArray, 200, -350.0, 150.0);
+        PFMET_UVert_vs_Zpt_h = TFS->make<TH2F>("PFMET_UVert_vs_Zpt_h", "PFMET_UVert_vs_Zpt_h", METResArraySize, METResArray, 200, -150.0, 150.0);
+        PFMET_UPara_h = TFS->make<TH1F>("PFMET_UPara_h", "PFMET_UPara_h", 100, -100, 100.0);
+        PFMET_UVert_h = TFS->make<TH1F>("PFMET_UVert_h", "PFMET_UVert_h", 100, -100, 100.0);
+    }
+
+    if(IsHighPtZ_)
+    {
+        CaloMETBE_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UPara_ratio_vs_Zpt_h", "CaloMETBE_UPara_ratio_vs_Zpt_h", 20, 100.0, 500.0, 200, -2.0, 4.0);
+        CaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UPara_vs_Zpt_h", "CaloMETBE_UPara_vs_Zpt_h", 20, 100.0, 500.0, 200, -600.0, 100.0);
+        CaloMETBE_UVert_vs_Zpt_h = TFS->make<TH2F>("CaloMETBE_UVert_vs_Zpt_h", "CaloMETBE_UVert_vs_Zpt_h", 20, 100.0, 500.0, 200, -150.0, 150.0);
+        CaloMETBE_UPara_h = TFS->make<TH1F>("CaloMETBE_UPara_h", "CaloMETBE_UPara_h", 100, -300, 100.0);
+        CaloMETBE_UVert_h = TFS->make<TH1F>("CaloMETBE_UVert_h", "CaloMETBE_UVert_h", 100, -150, 150.0);
+
+        myCaloMETBE_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UPara_ratio_vs_Zpt_h", "myCaloMETBE_UPara_ratio_vs_Zpt_h", 20, 100.0, 500.0, 200, -2.0, 4.0);
+        myCaloMETBE_UPara_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UPara_vs_Zpt_h", "myCaloMETBE_UPara_vs_Zpt_h", 20, 100.0, 500.0, 200, -350.0, 150.0);
+        myCaloMETBE_UVert_vs_Zpt_h = TFS->make<TH2F>("myCaloMETBE_UVert_vs_Zpt_h", "myCaloMETBE_UVert_vs_Zpt_h", 20, 100.0, 500.0, 200, -150.0, 150.0);
+        myCaloMETBE_UPara_h = TFS->make<TH1F>("myCaloMETBE_UPara_h", "myCaloMETBE_UPara_h", 100, -300, 100.0);
+        myCaloMETBE_UVert_h = TFS->make<TH1F>("myCaloMETBE_UVert_h", "myCaloMETBE_UVert_h", 100, -150, 150.0);
+
+        PFMET_UPara_ratio_vs_Zpt_h = TFS->make<TH2F>("PFMET_UPara_ratio_vs_Zpt_h", "PFMET_UPara_ratio_vs_Zpt_h", 20, 100.0, 500.0, 200, -2.0, 4.0);
+        PFMET_UPara_ratio_vs_Zpt_LPU_h = TFS->make<TH2F>("PFMET_UPara_ratio_vs_Zpt_LPU_h", "PFMET_UPara_ratio_vs_Zpt_LPU_h", 20, 100.0, 500.0, 200, -2.0, 4.0);
+        PFMET_UPara_vs_Zpt_h = TFS->make<TH2F>("PFMET_UPara_vs_Zpt_h", "PFMET_UPara_vs_Zpt_h", 20, 100.0, 500.0, 200, -700.0, 0.0);
+        PFMET_UVert_vs_Zpt_h = TFS->make<TH2F>("PFMET_UVert_vs_Zpt_h", "PFMET_UVert_vs_Zpt_h", 20, 100.0, 500.0, 200, -150.0, 150.0);
+        PFMET_UPara_h = TFS->make<TH1F>("PFMET_UPara_h", "PFMET_UPara_h", 100, -300, 0.0);
+        PFMET_UVert_h = TFS->make<TH1F>("PFMET_UVert_h", "PFMET_UVert_h", 100, -150, 150.0);
+    }
 
     if(IsMC_)
     {
@@ -272,6 +290,8 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
         DiJet_CaloJet_ratio_HB_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_HB_h", "DiJet_CaloJet_ratio_HB_h", 50, 0.5, 1.5);
         DiJet_CaloJet_ratio_HE_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_HE_h", "DiJet_CaloJet_ratio_HE_h", 50, 0.5, 1.5);
         DiJet_CaloJet_ratio_ieta_1516_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_ieta_1516_h", "DiJet_CaloJet_ratio_ieta_1516_h", 50, 0.5, 1.5);
+        DiJet_CaloJet_ratio_ieta_18_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_ieta_18_h", "DiJet_CaloJet_ratio_ieta_18_h", 50, 0.5, 1.5);
+        DiJet_CaloJet_ratio_ieta_2729_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_ieta_2729_h", "DiJet_CaloJet_ratio_ieta_2729_h", 50, 0.5, 1.5);
         DiJet_CaloJet_vs_GenJet_h = TFS->make<TH2F>("DiJet_CaloJet_vs_GenJet_h", "DiJet_CaloJet_vs_GenJet_h", 400, 0.0, 2000.0, 400, 0.0, 2000.0);
         DiJet_CaloJet_vs_GenJet_HB_h = TFS->make<TH2F>("DiJet_CaloJet_vs_GenJet_HB_h", "DiJet_CaloJet_vs_GenJet_HB_h", 400, 0.0, 2000.0, 400, 0.0, 2000.0);
         DiJet_CaloJet_vs_GenJet_HE_h = TFS->make<TH2F>("DiJet_CaloJet_vs_GenJet_HE_h", "DiJet_CaloJet_vs_GenJet_HE_h", 400, 0.0, 2000.0, 400, 0.0, 2000.0);
@@ -324,6 +344,14 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 {
     math::XYZTLorentzVector SelZ;
     bool PassZSel = false;
+
+    float ZptCutLow = 10;
+    float ZptCutHigh = 50;
+    if(IsHighPtZ_)
+    {
+        ZptCutLow = 150;
+        ZptCutHigh = 200;
+    }
 
     if(RunMod_ == "Zmumu")
     {
@@ -495,7 +523,7 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             CaloMETBE_UPara_ratio_vs_Zpt_h->Fill(SelZ_pt, - CaloMETBE_UPara / SelZ_pt);
             CaloMETBE_UPara_vs_Zpt_h->Fill(SelZ_pt, CaloMETBE_UPara);
             CaloMETBE_UVert_vs_Zpt_h->Fill(SelZ_pt, CaloMETBE_UVert);
-            if(SelZ_pt > 150 && SelZ_pt < 200)
+            if(SelZ_pt > ZptCutLow && SelZ_pt < ZptCutHigh)
             {
                 CaloMETBE_UPara_h->Fill(CaloMETBE_UPara);
                 CaloMETBE_UVert_h->Fill(CaloMETBE_UVert);
@@ -521,9 +549,13 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             auto PFMET_UVert = - PFMET_METVert;
 
             PFMET_UPara_ratio_vs_Zpt_h->Fill(SelZ_pt, - PFMET_UPara / SelZ_pt);
+            if(nPU < 20)
+            {
+                PFMET_UPara_ratio_vs_Zpt_LPU_h->Fill(SelZ_pt, - PFMET_UPara / SelZ_pt);
+            }
             PFMET_UPara_vs_Zpt_h->Fill(SelZ_pt, PFMET_UPara);
             PFMET_UVert_vs_Zpt_h->Fill(SelZ_pt, PFMET_UVert);
-            if(SelZ_pt > 150 && SelZ_pt < 200)
+            if(SelZ_pt > ZptCutLow && SelZ_pt < ZptCutHigh)
             {
                 PFMET_UPara_h->Fill(PFMET_UPara);
                 PFMET_UVert_h->Fill(PFMET_UVert);
@@ -540,7 +572,7 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         myCaloMETBE_UPara_ratio_vs_Zpt_h->Fill(SelZ_pt, - myCaloMETBE_UPara / SelZ_pt);
         myCaloMETBE_UPara_vs_Zpt_h->Fill(SelZ_pt, myCaloMETBE_UPara);
         myCaloMETBE_UVert_vs_Zpt_h->Fill(SelZ_pt, myCaloMETBE_UVert);
-        if(SelZ_pt > 150 && SelZ_pt < 200)
+        if(SelZ_pt > ZptCutLow && SelZ_pt < ZptCutHigh)
         {
             myCaloMETBE_UPara_h->Fill(myCaloMETBE_UPara);
             myCaloMETBE_UVert_h->Fill(myCaloMETBE_UVert);
@@ -654,6 +686,14 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                         DiJet_CaloJet_vs_GenJet_HE_h->Fill(GenJet.pt(), CaloJet.pt());
                         if(GenJet.pt() > 100)
                         {DiJet_CaloJet_ratio_HE_h->Fill(CaloJet.pt() / GenJet.pt());}
+                    }
+                    if(fabs(GenJet.eta()) > 1.46 && fabs(GenJet.eta()) < 1.59)
+                    {
+                        {DiJet_CaloJet_ratio_ieta_18_h->Fill(CaloJet.pt() / GenJet.pt());}
+                    }
+                    if(fabs(GenJet.eta()) > 2.5 && fabs(GenJet.eta()) < 3.0)
+                    {
+                        {DiJet_CaloJet_ratio_ieta_2729_h->Fill(CaloJet.pt() / GenJet.pt());}
                     }
                 }
             }
