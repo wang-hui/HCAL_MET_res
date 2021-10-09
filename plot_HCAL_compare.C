@@ -2,9 +2,9 @@ int plot_HCAL_compare()
 {
     bool plot_CaloJet_vs_GenJet = false;
     bool plot_CaloJet_vs_GenJet_pull = false;
-    bool plot_MET_response = true;
+    bool plot_MET_response = false;
     bool plot_MET_resolution = false;
-    bool plot_PU_offset = false;
+    bool plot_PU_offset = true;
 
     std::vector<TString> hist_list, file_list, leg_list;
     std::vector<int> color_list = {kRed, kBlue, kGreen+1, kYellow+1};
@@ -13,11 +13,13 @@ int plot_HCAL_compare()
     bool do_fit = true;
     bool do_SD = false;
     bool scale_SD = false;
+    bool print_test_value = true;
+    float test_value = 200;
 
     TString hist_folder = "";
     hist_folder = "myAna";
     int rebin_x = 5;
-    float px_scale = 0.5;
+    float px_scale = 1;
     float px_shift = 0;
 
     float y_min = 0;
@@ -35,7 +37,7 @@ int plot_HCAL_compare()
             "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_origin_recHit_plots",
             "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_DLPHIN_1dHB_2dHE_plots",
             "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_plots",
-            "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_respCorr_PNieta_plots"
+            "UL_RSGravitonToQuarkQuark_kMpl01_M_2000_RECO_PU_DLPHIN_respCorr_PNieta_plots",
         };
         leg_list = {"MAHI", "DLPHIN pt1TeV", "DLPHIN p1TeV", "DLPHIN p1TeV respCorr"};
         do_fit = true;
@@ -64,7 +66,7 @@ int plot_HCAL_compare()
           {
           "UL_EGamma_Run2018B_Run_317392_RECO_origin_recHit_plots",
           "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_plots",
-          "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_respCorr_plots"
+          "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_respCorr_plots",
           };*/
         file_list =
         {
@@ -73,30 +75,43 @@ int plot_HCAL_compare()
             //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_pt1TeV_plots",
             "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_plots",
             "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_plots",
-            //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_truncate_plots"
-            //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_JP_respCorr_plots"
-            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_ZeroOut_plots"
+            //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_truncate_plots",
+            //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_JP_respCorr_plots",
+            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_ZeroOut_plots",
             */
+
             "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_mahi_energy_plots",
-            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_plots",
-            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_plots",
-            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_zeroOut_plots"
+            //"DYJetsToMuMu_M-50_Zpt-150toInf_RECO_M0_energy_plots",
+            //"DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_plots",
+            //"DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_plots",
+            //"DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_zeroOut_plots",
+            //"DYJetsToMuMu_M-50_Zpt-150toInf_RECO_PU_DLPHIN_JP_respCorr_E50_zeroOut_plots",
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_respCorr_ZeroOut_HEcut0p1_plots",
+            //"DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_respCorr_ZeroOut_ConvLSTM_plots",
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_dedicate_respCorr_zeroOut_plots",
+
+            //"DoubleMuon_Run2018B_Run_317392_RECO_mahi_energy_plots",
+            //"DoubleMuon_Run2018B_Run_317392_RECO_M0_energy_plots",
+            //"DoubleMuon_Run2018B_Run_317392_RECO_DLPHIN_respCorr_ZeroOut_plots",
         };
-        //leg_list = {"MAHI", "DLPHIN", "DLPHIN Sunanda respCorr", "DLPHIN JP respCorr"};
-        leg_list = {"MAHI", "DLPHIN", "DLPHIN respCorr", "DLPHIN respCorr ZeroOut"};
-        hist_list.assign(4,
+        leg_list = {"MAHI", "new DLPHIN + old respCorr", "new DLPHIN + new respCorr"};
+        //leg_list = {"MAHI", "DLPHIN old respCorr", "DLPHIN new respCorr"};
+        //leg_list = {"old", "new"};
+        hist_list.assign(3,
                 //"myCaloMETBE_UPara_ratio_vs_Zpt"
                 "CaloMETBE_UPara_ratio_vs_Zpt"
+                //"CaloMETBE_UPara_ratio_vs_Zpt_PUL"
+                //"CaloMETBE_UPara_ratio_vs_Zpt_PUH"
                 //"PFMET_UPara_ratio_vs_Zpt"
                 );
-        px_scale = 1;
-        rebin_x = 1;
         x_title = "Z pt [GeV]";
         y_title = "- Upara / Z pt";
         do_fit = false; 
         do_SD = false;
-        y_min = 0;
-        y_max = 2;
+        y_min = 0.6;
+        y_max = 1.0;
+        rebin_x = 1;
+        px_shift = 40;
     }
 
     if (plot_MET_resolution)
@@ -105,7 +120,7 @@ int plot_HCAL_compare()
           {
           "UL_EGamma_Run2018B_Run_317392_RECO_origin_recHit_plots",
           "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_plots",
-          "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_respCorr_plots"
+          "UL_EGamma_Run2018B_Run_317392_RECO_DLPHIN_1dHB_2dHE_respCorr_plots",
           };*/
         file_list =
         {
@@ -116,37 +131,50 @@ int plot_HCAL_compare()
             "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_plots",
             //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_truncate_plots"
             //"UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_JP_respCorr_plots",
-            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_ZeroOut_plots"
+            "UL_DYJetsToEE_M-50_RECO_PU_DLPHIN_respCorr_ZeroOut_plots",
             */
             "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_mahi_energy_plots",
-            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_plots",
-            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_plots",
-            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_zeroOut_plots"
+            //"DYJetsToMuMu_M-50_Zpt-150toInf_RECO_M0_energy_plots",
+            //"DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_plots",
+            //"DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_plots",
+            //"DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_energy_respCorr_zeroOut_plots",
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_respCorr_ZeroOut_HEcut0p1_plots",
+            //"DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_respCorr_ZeroOut_ConvLSTM_plots",
+            "DYJetsToMuMu_M-50_Zpt-150toInf_RECO_DLPHIN_dedicate_respCorr_zeroOut_plots",
+
+            //"DoubleMuon_Run2018B_Run_317392_RECO_mahi_energy_plots",
+            //"DoubleMuon_Run2018B_Run_317392_RECO_M0_energy_plots",
+            //"DoubleMuon_Run2018B_Run_317392_RECO_DLPHIN_respCorr_ZeroOut_plots",
         };
-        //leg_list = {"MAHI", "DLPHIN", "DLPHIN Sunanda respCorr", "DLPHIN JP respCorr"};
-        leg_list = {"MAHI", "DLPHIN", "DLPHIN respCorr", "DLPHIN respCorr ZeroOut"};
-        hist_list.assign(4,
+        leg_list = {"MAHI", "new DLPHIN + old respCorr", "new DLPHIN + new respCorr"};
+        //leg_list = {"MAHI", "DLPHIN old respCorr", "DLPHIN new respCorr"};
+        //leg_list = {"old", "new"};
+        hist_list.assign(3,
                 //"myCaloMETBE_UPara_vs_Zpt"
                 "CaloMETBE_UPara_vs_Zpt"
+                //"CaloMETBE_UPara_vs_Zpt_PUL"
+                //"CaloMETBE_UPara_vs_Zpt_PUH"
                 //"PFMET_UPara_vs_Zpt"
                 //"myCaloMETBE_UVert_vs_Zpt"
                 //"CaloMETBE_UVert_vs_Zpt"
+                //"CaloMETBE_UVert_vs_Zpt_PUL"
+                //"CaloMETBE_UVert_vs_Zpt_PUH"
                 //"PFMET_UVert_vs_Zpt"
                 );
-        px_scale = 1;
-
         x_title = "Z pt [GeV]";
         y_title = "Upara [GeV]";
         SD_title = "#sigma_{Upara}";
+        y_max = 80;
         //y_title = "Uvert [GeV]";
         //SD_title = "#sigma_{Uvert}";
+        //y_max = 40;
         do_fit = false;
         do_SD = true;
         scale_SD = false;
-        y_min = 0;
-        y_max = 100;
+        y_min = 20;
         rebin_x = 1;
-        px_shift = 50;
+        px_scale = 1;
+        px_shift = 20;
     }
 
     if (plot_PU_offset)
@@ -154,24 +182,29 @@ int plot_HCAL_compare()
         file_list =
         {
             "UL_MinBias_RECO_mahi_energy_plots",
-            "UL_MinBias_RECO_DLPHIN_plots",
-            "UL_MinBias_RECO_DLPHIN_respCorr_plots",
-            "UL_MinBias_RECO_DLPHIN_respCorr_ZeroOut_plots"
+            //"UL_MinBias_RECO_M0_energy_plots",
+            //"UL_MinBias_RECO_DLPHIN_plots",
+            //"UL_MinBias_RECO_DLPHIN_respCorr_plots",
+            //"UL_MinBias_RECO_DLPHIN_respCorr_ZeroOut_plots",
+            "UL_MinBias_RECO_DLPHIN_respCorr_ZeroOut_HEcut0p1_plots",
+            //"UL_MinBias_RECO_DLPHIN_respCorr_ZeroOut_ConvLSTM_plots",
+            "UL_MinBias_RECO_DLPHIN_dedicate_respCorr_zeroOut_plots",
         };
-        //leg_list = {"MAHI", "DLPHIN", "DLPHIN Sunanda respCorr", "DLPHIN JP respCorr"};
-        leg_list = {"MAHI", "DLPHIN", "DLPHIN respCorr", "DLPHIN respCorr ZeroOut"};
-        hist_list.assign(4,
-                //"CaloTowerET_vs_eta"
-                "CaloTowerHadET_vs_eta"
+        leg_list = {"MAHI", "new DLPHIN + old respCorr", "new DLPHIN + new respCorr"};
+        //leg_list = {"MAHI", "DLPHIN respCorr ZeroOut", "DLPHIN respCorr ZeroOut cut 0.1", "DLPHIN ConvLSTM"};
+        hist_list.assign(3,
+                "CaloTowerET_vs_eta"
+                //"CaloTowerHadET_vs_eta"
+                //"CaloTowerEMET_vs_eta"
                 );
-        px_scale = 1;
-        rebin_x = 1;
         x_title = "#eta";
         y_title = "tower ET / PU";
         do_fit = false; 
         do_SD = false;
         y_min = 0;
-        y_max = 1;
+        y_max = 0.8;
+        rebin_x = 1;
+        px_scale = 1;
     }
 
     for(int i = 0; i < hist_list.size(); i++)
@@ -195,7 +228,7 @@ int plot_HCAL_compare()
         //h1->SetTitle("");
         h1->RebinX(rebin_x);
         h1->GetXaxis()->SetTitle(x_title);
-        h1->GetXaxis()->SetRangeUser(xmin, xmax);
+        h1->GetXaxis()->SetRangeUser(xmin + px_shift, xmax);
         h1->GetYaxis()->SetTitle(y_title);
         h1->GetYaxis()->SetRangeUser(ymin, ymax);
         gPad->SetLogz();
@@ -213,6 +246,11 @@ int plot_HCAL_compare()
         //px->SetLineWidth(2);
         //px->SetMarkerStyle(8);
         px->Draw("same");
+        if(print_test_value)
+        {
+            std::cout << file_name << std::endl;
+            std::cout << "profile at x = " << test_value << " is " << px->GetBinContent(px->GetXaxis()->FindBin(test_value)) << std::endl;
+        }
 
         px_list.push_back(px);
 
@@ -256,6 +294,11 @@ int plot_HCAL_compare()
             SD_h->GetYaxis()->SetTitle(SD_title);
             SD_h->GetXaxis()->SetRangeUser(xmin + px_shift, xmax * px_scale);
             SD_h->Draw("hist");
+            if(print_test_value)
+            {
+                std::cout << "SD at x = " << test_value << " is " << SD_h->GetBinContent(SD_h->GetXaxis()->FindBin(test_value)) << std::endl;
+            }
+
             SD_list.push_back(SD_h);
             mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_SD.png");
             //mycanvas->SaveAs("plots_temp/" + file_name + "_"  + hist_name + "_SD.pdf");
