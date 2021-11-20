@@ -128,7 +128,7 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
         TH1F * DiJet_CaloJet_mass_h, * DiJet_GenJet_mass_h;
         TH1F * DiJet_CaloJet_mass_BB_h, * DiJet_CaloJet_mass_EE_h, * DiJet_CaloJet_mass_BE_h;
-        TH1F * DiJet_CaloJet_ratio_h, * DiJet_CaloJet_ratio_HB_h, * DiJet_CaloJet_ratio_HE_h, * DiJet_CaloJet_ratio_ieta_1516_h, * DiJet_CaloJet_ratio_ieta_18_h, * DiJet_CaloJet_ratio_ieta_2729_h;
+        TH1F * DiJet_CaloJet_ratio_h, * DiJet_CaloJet_ratio_HB_h, * DiJet_CaloJet_ratio_HE_h, * DiJet_CaloJet_ratio_HE_ietaL_h, * DiJet_CaloJet_ratio_HE_ietaH_h, * DiJet_CaloJet_ratio_ieta_1516_h, * DiJet_CaloJet_ratio_ieta_18_h, * DiJet_CaloJet_ratio_ieta_2729_h;
 
         TH1F * DiJet_PFJet_mass_h;
         TH1F * DiJet_PFJet_mass_BB_h, * DiJet_PFJet_mass_EE_h, * DiJet_PFJet_mass_BE_h;
@@ -305,6 +305,8 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
         DiJet_CaloJet_ratio_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_h", "DiJet_CaloJet_ratio_h", 50, 0.5, 1.5);
         DiJet_CaloJet_ratio_HB_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_HB_h", "DiJet_CaloJet_ratio_HB_h", 50, 0.5, 1.5);
         DiJet_CaloJet_ratio_HE_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_HE_h", "DiJet_CaloJet_ratio_HE_h", 50, 0.5, 1.5);
+        DiJet_CaloJet_ratio_HE_ietaL_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_HE_ietaL_h", "DiJet_CaloJet_ratio_HE_ietaL_h", 50, 0.5, 1.5);
+        DiJet_CaloJet_ratio_HE_ietaH_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_HE_ietaH_h", "DiJet_CaloJet_ratio_HE_ietaH_h", 50, 0.5, 1.5);
         DiJet_CaloJet_ratio_ieta_1516_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_ieta_1516_h", "DiJet_CaloJet_ratio_ieta_1516_h", 50, 0.5, 1.5);
         DiJet_CaloJet_ratio_ieta_18_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_ieta_18_h", "DiJet_CaloJet_ratio_ieta_18_h", 50, 0.5, 1.5);
         DiJet_CaloJet_ratio_ieta_2729_h = TFS->make<TH1F>("DiJet_CaloJet_ratio_ieta_2729_h", "DiJet_CaloJet_ratio_ieta_2729_h", 50, 0.5, 1.5);
@@ -487,7 +489,7 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                 }
             }
 
-            //if(Ieta == 27 && Iphi == 31) std::cout << Hid << ", " << RawId << ", " << HBHERecHit.eraw() << ", " << HBHERecHit.eaux() << ", " << Energy << std::endl;
+            //if(Ieta == 28) std::cout << Hid << ", " << RawId << ", " << HBHERecHit.eraw() << ", " << HBHERecHit.eaux() << ", " << Energy << std::endl;
             if(PrintChannel_) std::cout << Hid << ", " << RawId << ", " << SubDet << ", " << Depth << ", " << Ieta << ", " << Eta << ", " << Iphi << ", " << Phi << ", " << Energy << std::endl;
         }
 
@@ -707,7 +709,13 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                     {
                         DiJet_CaloJet_vs_GenJet_HE_h->Fill(GenJet.pt(), CaloJet.pt());
                         if(GenJet.pt() > 100)
-                        {DiJet_CaloJet_ratio_HE_h->Fill(CaloJet.pt() / GenJet.pt());}
+                        {
+                            DiJet_CaloJet_ratio_HE_h->Fill(CaloJet.pt() / GenJet.pt());
+                            if(fabs(GenJet.eta()) < 2.3)
+                            {DiJet_CaloJet_ratio_HE_ietaL_h->Fill(CaloJet.pt() / GenJet.pt());}
+                            else
+                            {DiJet_CaloJet_ratio_HE_ietaH_h->Fill(CaloJet.pt() / GenJet.pt());}
+                        }
                     }
                     if(fabs(GenJet.eta()) > 1.46 && fabs(GenJet.eta()) < 1.59)
                     {

@@ -75,12 +75,14 @@ class HCAL_Jet_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
         virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
         virtual void endJob() override;
 
+        bool use_simHit;
         bool is_run3_relVal;
         float max_simHit_time;
 
         std::vector<reco::CaloJet> select_CaloJets(const std::vector<reco::GenJet> * GenJets, const std::vector<reco::CaloJet> * CaloJets);
         void sum_energy_per_rawId(std::map <int, std::vector<float>> & id_energy_map, int id, float energy);
         std::map <int, std::vector<float>> make_id_energy_map(const std::vector<PCaloHit> * SimHits, const HcalDDDRecConstants * hcons);
+        std::map <int, std::vector<float>> make_id_energy_map(const HBHERecHitCollection * HBHERecHits);
 
         edm::EDGetTokenT<std::vector<PCaloHit>> HcalHitsToken_;
         edm::EDGetTokenT<HBHERecHitCollection> HBHERecHitsToken_;
@@ -127,11 +129,12 @@ class HCAL_Jet_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 // constructors and destructor
 //
 HCAL_Jet_Ana::HCAL_Jet_Ana(const edm::ParameterSet& iConfig):
+    use_simHit(iConfig.getUntrackedParameter<bool>("use_simHit")),
     is_run3_relVal(iConfig.getUntrackedParameter<bool>("is_run3_relVal")),
     max_simHit_time(iConfig.getUntrackedParameter<double>("max_simHit_time"))
 {
     //now do what ever initialization is needed
-    HcalHitsToken_ = consumes<std::vector<PCaloHit>>(edm::InputTag("g4SimHits","HcalHits","SIM"));
+    if(use_simHit){HcalHitsToken_ = consumes<std::vector<PCaloHit>>(edm::InputTag("g4SimHits","HcalHits","SIM"));}
     HBHERecHitsToken_ = consumes<HBHERecHitCollection>(edm::InputTag("hbhereco"));
     CaloTowersToken_ = consumes<CaloTowerCollection>(edm::InputTag("towerMaker"));
     CaloJetToken_ = consumes<std::vector<reco::CaloJet>>(edm::InputTag("ak4CaloJets"));
@@ -205,9 +208,13 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         //std::cout << CaloTower.ieta() << ", " << CaloTower.eta() << ", " << CaloTower.p4().Eta() << std::endl;
     }
 
-    edm::Handle<std::vector<PCaloHit>> HcalHitsHandle;
-    iEvent.getByToken(HcalHitsToken_, HcalHitsHandle);
-    auto SimHits = HcalHitsHandle.product();
+    const std::vector<PCaloHit> * SimHits;
+    if(use_simHit)
+    {
+        edm::Handle<std::vector<PCaloHit>> HcalHitsHandle;
+        iEvent.getByToken(HcalHitsToken_, HcalHitsHandle);
+        SimHits = HcalHitsHandle.product();
+    }
 
     edm::Handle<HBHERecHitCollection> HBHERecHitsHandle;
     iEvent.getByToken(HBHERecHitsToken_, HBHERecHitsHandle);
@@ -244,7 +251,9 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     std::vector<reco::CaloJet> SelectedCaloJets = select_CaloJets(GenJets, CaloJets);
     if (SelectedCaloJets.size() == 2)
     {
-        std::map <int, std::vector<float>> id_energy_map = make_id_energy_map(SimHits, hcons);
+        std::map <int, std::vector<float>> id_energy_map;
+        if(use_simHit) {id_energy_map = make_id_energy_map(SimHits, hcons);}
+        else {id_energy_map = make_id_energy_map(HBHERecHits);}
         GenJetVec_p4.push_back(GenJets->at(0).p4());
         GenJetVec_p4.push_back(GenJets->at(1).p4());
 
@@ -393,6 +402,19 @@ std::map <int, std::vector<float>> HCAL_Jet_Ana::make_id_energy_map(const std::v
             if(samplingFactor == 0) std::cout << "Error! miss-match samplingFactor" << std::endl;
             sum_energy_per_rawId(id_energy_map, rawId, energy * samplingFactor * digi_SF);
         }
+    }
+    return id_energy_map;
+}
+
+std::map <int, std::vector<float>> HCAL_Jet_Ana::make_id_energy_map(const HBHERecHitCollection * HBHERecHits)
+{
+    std::map <int, std::vector<float>> id_energy_map;
+    for(auto HBHERecHit : *HBHERecHits)
+    {
+        auto Hid = HBHERecHit.id();
+        auto RawId = Hid.rawId();
+        auto Energy = HBHERecHit.energy();
+        sum_energy_per_rawId(id_energy_map, RawId, Energy);
     }
     return id_energy_map;
 }
