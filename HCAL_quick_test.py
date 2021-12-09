@@ -1,15 +1,23 @@
+import sys
 import ROOT as rt
 import DataFormats.FWLite as fw
 
-#FileList = "FileList/UL_DoublePion_E-50_RECO_pCaloHits_noPU_DLPHIN.list"
-FileList = "FileList/UL_QCD_HT2000toInf_DLPHIN_8thread.list"
-#FileList = "FileList/UL_DoublePion_E-50_RECO_DLPHIN_dedicate_respCorr_zeroOut.list"
-#FileList = "FileList/UL_DoublePion_E-50_RECO_DLPHIN_old_respCorr_zeroOut_lowpt_caloJets.list"
+f = open(sys.argv[1], "r")
+InputFileList = f.readlines()
+f.close()
 
-MaxFiles = 20
+if len(sys.argv) == 3:
+    nFile = int(sys.argv[2])
+    InputFileList = InputFileList[0:nFile]
+for i, InputFile in enumerate(InputFileList):
+    InputFileList[i] = InputFile.strip()
+
+OutputFileName = sys.argv[1].split("/")[-1]
+OutputFileName = OutputFileName.split(".")[0]
+OutputFileName = OutputFileName + "_quick_test.root"
+
 MaxEvents = -1
-
-OutputFile = rt.TFile("HCAL_quick_test.root","RECREATE")
+OutputFile = rt.TFile(OutputFileName, "RECREATE")
 
 GenPionEta_h = rt.TH1F("GenPionEta_h", "GenPionEta_h", 70, -3.5, 3.5)
 GenJetEta_h = rt.TH1F("GenJetEta_h", "GenJetEta_h", 70, -3.5, 3.5)
@@ -23,15 +31,7 @@ GenPartHandle = fw.Handle("vector<reco::GenParticle>")
 GenJetHandle = fw.Handle("vector<reco::GenJet>")
 CaloJetHandle = fw.Handle("vector<reco::CaloJet>")
 
-f = open(FileList, "r")
-#InputFiles = f.readlines()
-InputFiles = f.read().splitlines()
-f.close()
-MaxFilesTemp = len(InputFiles)
-if MaxFiles > 0:
-    MaxFilesTemp = MaxFiles
-
-for InputFile in InputFiles[:MaxFilesTemp]:
+for InputFile in InputFileList:
     print InputFile
     Events = fw.Events(InputFile, maxEvents=MaxEvents)
     for Event in Events:
