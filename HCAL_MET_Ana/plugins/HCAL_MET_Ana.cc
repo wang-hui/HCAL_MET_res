@@ -346,20 +346,20 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
         CaloJetE_vs_GenJet_HB_pull_h = TFS->make<TH2F>("CaloJetE_vs_GenJet_HB_pull_h", "CaloJetE_vs_GenJet_HB_pull_h", 200, 0.0, 200.0, 200, 0.0, 200.0);
         CaloJetE_vs_GenJet_ieta1516_pull_h = TFS->make<TH2F>("CaloJetE_vs_GenJet_ieta1516_pull_h", "CaloJetE_vs_GenJet_ieta1516_pull_h", 200, 0.0, 200.0, 200, 0.0, 200.0);
         CaloJetE_vs_GenJet_HE_pull_h = TFS->make<TH2F>("CaloJetE_vs_GenJet_HE_pull_h", "CaloJetE_vs_GenJet_HE_pull_h", 200, 0.0, 200.0, 200, 0.0, 200.0);
-        /*
         CaloJetE_ratio_h = TFS->make<TH1F>("CaloJetE_ratio_h", "CaloJetE_ratio_h", 80, 0.0, 4.0);
         CaloJetE_ratio_HB_h = TFS->make<TH1F>("CaloJetE_ratio_HB_h", "CaloJetE_ratio_HB_h", 80, 0.0, 4.0);
         CaloJetE_ratio_ieta1516_h = TFS->make<TH1F>("CaloJetE_ratio_ieta1516_h", "CaloJetE_ratio_ieta1516_h", 80, 0.0, 4.0);
         CaloJetE_ratio_HE_h = TFS->make<TH1F>("CaloJetE_ratio_HE_h", "CaloJetE_ratio_HE_h", 80, 0.0, 4.0);
         CaloJetE_ratio_HE_ietaL_h = TFS->make<TH1F>("CaloJetE_ratio_HE_ietaL_h", "CaloJetE_ratio_HE_ietaL_h", 80, 0.0, 4.0);
         CaloJetE_ratio_HE_ietaH_h = TFS->make<TH1F>("CaloJetE_ratio_HE_ietaH_h", "CaloJetE_ratio_HE_ietaH_h", 80, 0.0, 4.0);
-        */
+        /*
         CaloJetE_ratio_h = TFS->make<TH1F>("CaloJetE_ratio_h", "CaloJetE_ratio_h", 100, 0.5, 1.5);
         CaloJetE_ratio_HB_h = TFS->make<TH1F>("CaloJetE_ratio_HB_h", "CaloJetE_ratio_HB_h", 100, 0.5, 1.5);
         CaloJetE_ratio_ieta1516_h = TFS->make<TH1F>("CaloJetE_ratio_ieta1516_h", "CaloJetE_ratio_ieta1516_h", 100, 0.5, 1.5);
         CaloJetE_ratio_HE_h = TFS->make<TH1F>("CaloJetE_ratio_HE_h", "CaloJetE_ratio_HE_h", 100, 0.5, 1.5);
         CaloJetE_ratio_HE_ietaL_h = TFS->make<TH1F>("CaloJetE_ratio_HE_ietaL_h", "CaloJetE_ratio_HE_ietaL_h", 100, 0.5, 1.5);
         CaloJetE_ratio_HE_ietaH_h = TFS->make<TH1F>("CaloJetE_ratio_HE_ietaH_h", "CaloJetE_ratio_HE_ietaH_h", 100, 0.5, 1.5);
+        */
     }
 }
 
@@ -802,12 +802,12 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                         for(auto CaloJet : *CaloJets)
                         {
                             auto CaloJetP4 = CaloJet.p4();
-                            auto CaloJetHadE = CaloJet.energyFractionHadronic() * CaloJetP4.E();
-                            //auto OtherE = CaloJet.emEnergyFraction() * CaloJetP4.E() + CaloJet.hadEnergyInHF();
-                            //if(ROOT::Math::VectorUtil::DeltaR(GenJetP4, CaloJetP4) < 0.2 && OtherE / GenE < 0.05)
-                            if( CaloJetHadE > 800 && CaloJetHadE < 1200 &&
-                                ROOT::Math::VectorUtil::DeltaR(GenJetP4, CaloJetP4) < 0.2 &&
-                                CaloJet.hadEnergyInHF() / GenE < 0.05)
+                            auto OtherE = CaloJet.emEnergyFraction() * CaloJetP4.E() + CaloJet.hadEnergyInHF();
+                            if(ROOT::Math::VectorUtil::DeltaR(GenJetP4, CaloJetP4) < 0.2 && OtherE / GenE < 0.05)
+                            //auto CaloJetHadE = CaloJet.energyFractionHadronic() * CaloJetP4.E();
+                            //if( CaloJetHadE > 800 && CaloJetHadE < 1200 &&
+                            //    ROOT::Math::VectorUtil::DeltaR(GenJetP4, CaloJetP4) < 0.2 &&
+                            //    CaloJet.hadEnergyInHF() / GenE < 0.05)
                             {
                                 auto RecoE = CaloJetP4.E();
                                 //std::cout << "emEnergyFraction = " << CaloJet.emEnergyFraction() << ", energyFractionHadronic = " << CaloJet.energyFractionHadronic() << std::endl;

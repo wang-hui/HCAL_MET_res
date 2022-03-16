@@ -29,17 +29,11 @@ Implementation:
 //DataFormats and Geometry
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
 #include "DataFormats/HcalRecHit/interface/HcalRecHitCollections.h"
-#include "DataFormats/CaloTowers/interface/CaloTowerCollection.h"
-#include "DataFormats/JetReco/interface/PFJet.h"
 #include "DataFormats/JetReco/interface/CaloJet.h"
 #include "DataFormats/JetReco/interface/GenJet.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
-#include "SimDataFormats/CaloHit/interface/PCaloHit.h"
 
 #include "Geometry/Records/interface/HcalRecNumberingRecord.h"
-#include "Geometry/HcalCommonData/interface/HcalDDDRecConstants.h"
-#include "Geometry/HcalCommonData/interface/HcalHitRelabeller.h"
-#include "samplingFactor.h"
 
 //ROOT includes
 #include "TH1.h"
@@ -75,20 +69,12 @@ class HCAL_Jet_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
         virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
         virtual void endJob() override;
 
-        bool use_simHit;
-        bool is_run3_relVal;
-        float max_simHit_time;
-
         std::vector<reco::CaloJet> select_CaloJets(const std::vector<reco::GenJet> * GenJets, const std::vector<reco::CaloJet> * CaloJets);
         void sum_energy_per_rawId(std::map <int, std::vector<float>> & id_energy_map, int id, float energy);
-        std::map <int, std::vector<float>> make_id_energy_map(const std::vector<PCaloHit> * SimHits, const HcalDDDRecConstants * hcons);
         std::map <int, std::vector<float>> make_id_energy_map(const HBHERecHitCollection * HBHERecHits);
 
-        edm::EDGetTokenT<std::vector<PCaloHit>> HcalHitsToken_;
         edm::EDGetTokenT<HBHERecHitCollection> HBHERecHitsToken_;
-        edm::EDGetTokenT<CaloTowerCollection> CaloTowersToken_;
         edm::EDGetTokenT<std::vector<reco::CaloJet>> CaloJetToken_;
-        edm::EDGetTokenT<std::vector<reco::PFJet>> PFJetToken_;
         edm::EDGetTokenT<std::vector<reco::Vertex>> VertexToken_;
         edm::EDGetTokenT<std::vector<reco::GenJet>> GenJetToken_;
 
@@ -128,17 +114,11 @@ class HCAL_Jet_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 //
 // constructors and destructor
 //
-HCAL_Jet_Ana::HCAL_Jet_Ana(const edm::ParameterSet& iConfig):
-    use_simHit(iConfig.getUntrackedParameter<bool>("use_simHit")),
-    is_run3_relVal(iConfig.getUntrackedParameter<bool>("is_run3_relVal")),
-    max_simHit_time(iConfig.getUntrackedParameter<double>("max_simHit_time"))
+HCAL_Jet_Ana::HCAL_Jet_Ana(const edm::ParameterSet& iConfig)
 {
     //now do what ever initialization is needed
-    if(use_simHit){HcalHitsToken_ = consumes<std::vector<PCaloHit>>(edm::InputTag("g4SimHits","HcalHits","SIM"));}
     HBHERecHitsToken_ = consumes<HBHERecHitCollection>(edm::InputTag("hbhereco"));
-    CaloTowersToken_ = consumes<CaloTowerCollection>(edm::InputTag("towerMaker"));
     CaloJetToken_ = consumes<std::vector<reco::CaloJet>>(edm::InputTag("ak4CaloJets"));
-    PFJetToken_ = consumes<std::vector<reco::PFJet>>(edm::InputTag("ak4PFJetsCHS"));
     VertexToken_ = consumes<std::vector<reco::Vertex>>(edm::InputTag("offlinePrimaryVertices"));
     GenJetToken_ = consumes<std::vector<reco::GenJet>>(edm::InputTag("ak4GenJetsNoNu"));
 
@@ -191,31 +171,6 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     int nPU = Vertex->size();
     PU_h->Fill(nPU);
 
-    edm::Handle<std::vector<reco::PFJet>> PFJetHandle;
-    iEvent.getByToken(PFJetToken_, PFJetHandle);
-    auto PFJets = PFJetHandle.product();
-
-    edm::ESHandle<HcalDDDRecConstants> pHRNDC;
-    iSetup.get<HcalRecNumberingRecord>().get(pHRNDC);
-    const HcalDDDRecConstants *hcons = &(*pHRNDC);
-
-    edm::Handle<CaloTowerCollection> CaloTowersHandle;
-    iEvent.getByToken(CaloTowersToken_, CaloTowersHandle);
-    auto CaloTowers = CaloTowersHandle.product();
-    for(auto CaloTower : *CaloTowers)
-    {
-        //std::cout << "ET " << CaloTower.et() << ", hadEt " << CaloTower.hadEt() << ", emEt " << CaloTower.emEt() << std::endl;
-        //std::cout << CaloTower.ieta() << ", " << CaloTower.eta() << ", " << CaloTower.p4().Eta() << std::endl;
-    }
-
-    const std::vector<PCaloHit> * SimHits;
-    if(use_simHit)
-    {
-        edm::Handle<std::vector<PCaloHit>> HcalHitsHandle;
-        iEvent.getByToken(HcalHitsToken_, HcalHitsHandle);
-        SimHits = HcalHitsHandle.product();
-    }
-
     edm::Handle<HBHERecHitCollection> HBHERecHitsHandle;
     iEvent.getByToken(HBHERecHitsToken_, HBHERecHitsHandle);
     auto HBHERecHits = HBHERecHitsHandle.product();
@@ -252,8 +207,7 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     if (SelectedCaloJets.size() == 2)
     {
         std::map <int, std::vector<float>> id_energy_map;
-        if(use_simHit) {id_energy_map = make_id_energy_map(SimHits, hcons);}
-        else {id_energy_map = make_id_energy_map(HBHERecHits);}
+        id_energy_map = make_id_energy_map(HBHERecHits);
         GenJetVec_p4.push_back(GenJets->at(0).p4());
         GenJetVec_p4.push_back(GenJets->at(1).p4());
 
@@ -357,53 +311,6 @@ void HCAL_Jet_Ana::sum_energy_per_rawId(std::map <int, std::vector<float>> & id_
     it = id_energy_map.find(id);
     if (it != id_energy_map.end()) id_energy_map.at(id).push_back(energy);
     else id_energy_map[id] = {energy};
-}
-
-std::map <int, std::vector<float>> HCAL_Jet_Ana::make_id_energy_map(const std::vector<PCaloHit> * SimHits, const HcalDDDRecConstants * hcons)
-{
-    const int HE_ieta_min = 16;
-
-    std::map <int, std::vector<float>> id_energy_map;
-    for(auto iter : *SimHits)
-    {
-        auto time = iter.time();
-        if(time > max_simHit_time) {continue;}
-        auto energy = iter.energy();
-
-        HcalDetId hid(iter.id());
-        hid = HcalDetId(HcalHitRelabeller::relabel(iter.id(), hcons));
-        auto rawId = hid.rawId();
-        auto subdet = hid.subdet();
-        auto depth = hid.depth();
-        auto ietaAbs = hid.ietaAbs();
-        //auto ieta = hid.ieta();
-        //auto iphi = hid.iphi();
-
-        if(subdet == 1 || subdet == 2)
-        {
-            float samplingFactor = 0;
-            float digi_SF = 1;
-
-            int ietaAbs_HB = ietaAbs - 1;
-            int ietaAbs_HE = ietaAbs - HE_ieta_min;
-
-            if(subdet == 1 && ietaAbs_HB < (int)samplingFactors_hb.size())
-            {
-                samplingFactor = samplingFactors_hb.at(ietaAbs_HB);
-                //factor 0.5 for HB depth1, except for |ieta|=16 depth1
-                if (is_run3_relVal && depth == 1 && ietaAbs != 16) digi_SF = 0.5;
-            }
-            if(subdet == 2 && ietaAbs_HE < (int)samplingFactors_he.size())
-            {
-                samplingFactor = samplingFactors_he.at(ietaAbs_HE);
-                //factor 1.2 for HE depth1
-                if (depth == 1) digi_SF = 1.2;
-            }
-            if(samplingFactor == 0) std::cout << "Error! miss-match samplingFactor" << std::endl;
-            sum_energy_per_rawId(id_energy_map, rawId, energy * samplingFactor * digi_SF);
-        }
-    }
-    return id_energy_map;
 }
 
 std::map <int, std::vector<float>> HCAL_Jet_Ana::make_id_energy_map(const HBHERecHitCollection * HBHERecHits)
