@@ -133,7 +133,7 @@ class HCAL_MET_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
         TH1F * DiJet_PFJet_mass_h;
         TH1F * DiJet_PFJet_mass_BB_h, * DiJet_PFJet_mass_EE_h, * DiJet_PFJet_mass_BE_h;
-        TH1F * DiJet_PFJet_ratio_h, * DiJet_PFJet_ratio_HB_h, * DiJet_PFJet_ratio_HE_h, * DiJet_PFJet_ratio_ieta_1516_h;
+        TH1F * DiJet_PFJet_ratio_h, * DiJet_PFJet_ratio_HB_h, * DiJet_PFJet_ratio_HE_h, * DiJet_PFJet_ratio_HE_ietaL_h, * DiJet_PFJet_ratio_HE_ietaH_h, * DiJet_PFJet_ratio_ieta_1516_h;
 
         TH2F * CaloMETBE_vs_PU_h, * CaloMETBE_phi_vs_PU_h;
         TH1F * CaloMETBE_UPara_h, * CaloMETBE_UVert_h;
@@ -328,6 +328,8 @@ HCAL_MET_Ana::HCAL_MET_Ana(const edm::ParameterSet& iConfig):
         DiJet_PFJet_ratio_h = TFS->make<TH1F>("DiJet_PFJet_ratio_h", "DiJet_PFJet_ratio_h", 50, 0.5, 1.5);
         DiJet_PFJet_ratio_HB_h = TFS->make<TH1F>("DiJet_PFJet_ratio_HB_h", "DiJet_PFJet_ratio_HB_h", 50, 0.5, 1.5);
         DiJet_PFJet_ratio_HE_h = TFS->make<TH1F>("DiJet_PFJet_ratio_HE_h", "DiJet_PFJet_ratio_HE_h", 50, 0.5, 1.5);
+        DiJet_PFJet_ratio_HE_ietaL_h = TFS->make<TH1F>("DiJet_PFJet_ratio_HE_ietaL_h", "DiJet_PFJet_ratio_HE_ietaL_h", 50, 0.5, 1.5);
+        DiJet_PFJet_ratio_HE_ietaH_h = TFS->make<TH1F>("DiJet_PFJet_ratio_HE_ietaH_h", "DiJet_PFJet_ratio_HE_ietaH_h", 50, 0.5, 1.5);
         DiJet_PFJet_ratio_ieta_1516_h = TFS->make<TH1F>("DiJet_PFJet_ratio_ieta_1516_h", "DiJet_PFJet_ratio_ieta_1516_h", 50, 0.5, 1.5);
         DiJet_PFJet_vs_GenJet_h = TFS->make<TH2F>("DiJet_PFJet_vs_GenJet_h", "DiJet_PFJet_vs_GenJet_h", 400, 0.0, 2000.0, 400, 0.0, 2000.0);
         DiJet_PFJet_vs_GenJet_HB_h = TFS->make<TH2F>("DiJet_PFJet_vs_GenJet_HB_h", "DiJet_PFJet_vs_GenJet_HB_h", 400, 0.0, 2000.0, 400, 0.0, 2000.0);
@@ -785,7 +787,13 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                     {
                         DiJet_PFJet_vs_GenJet_HE_h->Fill(GenJet.pt(), PFJet.pt());
                         if(GenJet.pt() > 100)
-                        {DiJet_PFJet_ratio_HE_h->Fill(PFJet.pt() / GenJet.pt());}
+                        {
+                            DiJet_PFJet_ratio_HE_h->Fill(PFJet.pt() / GenJet.pt());
+                            if(fabs(GenJet.eta()) < 2.3)
+                            {DiJet_PFJet_ratio_HE_ietaL_h->Fill(PFJet.pt() / GenJet.pt());}
+                            else
+                            {DiJet_PFJet_ratio_HE_ietaH_h->Fill(PFJet.pt() / GenJet.pt());}
+                        }
                     }
                 }
             }
