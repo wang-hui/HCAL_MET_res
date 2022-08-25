@@ -69,13 +69,14 @@ class HCAL_Jet_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
         virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
         virtual void endJob() override;
 
-        std::vector<reco::CaloJet> select_CaloJets(const std::vector<reco::GenJet> * GenJets, const std::vector<reco::CaloJet> * CaloJets);
+        std::vector<std::pair<reco::GenJet, reco::CaloJet>> pair_gen_and_calo(const std::vector<reco::GenJet> * GenJets, const std::vector<reco::CaloJet> * CaloJets);
 
         edm::EDGetTokenT<HBHERecHitCollection> HBHERecHitsToken_;
         edm::EDGetTokenT<std::vector<reco::CaloJet>> CaloJetToken_;
         edm::EDGetTokenT<std::vector<reco::Vertex>> VertexToken_;
         edm::EDGetTokenT<std::vector<reco::GenJet>> GenJetToken_;
 
+        bool TightCut_;
         TH1F * PU_h;
 
         TTree * GenJetTree;
@@ -111,7 +112,8 @@ class HCAL_Jet_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 //
 // constructors and destructor
 //
-HCAL_Jet_Ana::HCAL_Jet_Ana(const edm::ParameterSet& iConfig)
+HCAL_Jet_Ana::HCAL_Jet_Ana(const edm::ParameterSet& iConfig):
+    TightCut_(iConfig.getUntrackedParameter<bool>("TightCut"))
 {
     //now do what ever initialization is needed
     HBHERecHitsToken_ = consumes<HBHERecHitCollection>(edm::InputTag("hbhereco"));
@@ -198,19 +200,22 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     CaloJetVec_CaloConstituentsVec_HCALChannelVec_Depth.clear();
     CaloJetVec_CaloConstituentsVec_HCALChannelVec_Energy.clear();
 
-    std::vector<reco::CaloJet> SelectedCaloJets = select_CaloJets(GenJets, CaloJets);
-    if (SelectedCaloJets.size() == 2)
-    {
-        GenJetVec_p4.push_back(GenJets->at(0).p4());
-        GenJetVec_p4.push_back(GenJets->at(1).p4());
+    auto GenJetCaloJetVec = pair_gen_and_calo(GenJets, CaloJets);
+    bool PassCut = false;
+    if (TightCut_) PassCut = (GenJetCaloJetVec.size() == 2);
+    else PassCut = (GenJetCaloJetVec.size() > 0);
 
+    if (PassCut)
+    {
         int CaloJetCounter = 0;
         int CaloConsCounter = 0;
-
-        for (auto SelectedCaloJet : SelectedCaloJets)
+        for (auto GenJetCaloJet : GenJetCaloJetVec)
         {
-            CaloJetVec_Energy.push_back(SelectedCaloJet.energy());
-            std::vector<CaloTowerPtr> CaloConsPtrs = SelectedCaloJet.getCaloConstituents();
+            auto GenJet = GenJetCaloJet.first;
+            auto CaloJet = GenJetCaloJet.second;
+            GenJetVec_p4.push_back(GenJet.p4());
+            CaloJetVec_Energy.push_back(CaloJet.energy());
+            std::vector<CaloTowerPtr> CaloConsPtrs = CaloJet.getCaloConstituents();
             for (auto CaloConsPtr : CaloConsPtrs)
             {
                 auto CaloConsIeta = CaloConsPtr->ieta();
@@ -241,8 +246,8 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                         CaloJetVec_CaloConstituentsVec_HCALChannelVec_Iphi.push_back(Iphi);
                         CaloJetVec_CaloConstituentsVec_HCALChannelVec_Depth.push_back(Depth);
                         CaloJetVec_CaloConstituentsVec_HCALChannelVec_Energy.push_back(Energy);
-                    }//match SimHits to CaloTower
-                }//loop SimHits
+                    }//match RecHits to CaloTower
+                }//loop RecHits
                 CaloConsCounter++;
             }//loop ColoTower
             CaloJetCounter++;
@@ -264,34 +269,23 @@ void HCAL_Jet_Ana::endJob()
 {
 }
 
-std::vector<reco::CaloJet> HCAL_Jet_Ana::select_CaloJets(const std::vector<reco::GenJet> * GenJets, const std::vector<reco::CaloJet> * CaloJets)
+std::vector<std::pair<reco::GenJet, reco::CaloJet>> HCAL_Jet_Ana::pair_gen_and_calo(const std::vector<reco::GenJet> * GenJets, const std::vector<reco::CaloJet> * CaloJets)
 {
-    std::vector<reco::CaloJet> SelectedCaloJets;
-    if(GenJets->size() > 1 && CaloJets->size() > 1)
+    std::vector<std::pair<reco::GenJet, reco::CaloJet>> GenJetCaloJetVec;
+    for(auto GenJet : *GenJets)
     {
-        auto GenJet0P4 = GenJets->at(0).p4();
-        auto GenJet1P4 = GenJets->at(1).p4();
-        if(fabs(GenJet0P4.Eta()) < 3.0 && fabs(GenJet1P4.Eta()) < 3.0
-                && ROOT::Math::VectorUtil::DeltaR(GenJet0P4, GenJet1P4) > 1)
+        auto GenJetP4 = GenJet.p4();
+        if(fabs(GenJetP4.Eta()) < 3.0)
         {
-            auto CaloJet0P4 = CaloJets->at(0).p4();
-            auto CaloJet1P4 = CaloJets->at(1).p4();
-
-            if(ROOT::Math::VectorUtil::DeltaR(GenJet0P4, CaloJet0P4) < 0.2
-                    && ROOT::Math::VectorUtil::DeltaR(GenJet1P4, CaloJet1P4) < 0.2)
+            for(auto CaloJet : *CaloJets)
             {
-                SelectedCaloJets.push_back(CaloJets->at(0));
-                SelectedCaloJets.push_back(CaloJets->at(1));
-            }
-            else if(ROOT::Math::VectorUtil::DeltaR(GenJet0P4, CaloJet1P4) < 0.2
-                    && ROOT::Math::VectorUtil::DeltaR(GenJet1P4, CaloJet0P4) < 0.2)
-            {
-                SelectedCaloJets.push_back(CaloJets->at(1));
-                SelectedCaloJets.push_back(CaloJets->at(0));
+                auto CaloJetP4 = CaloJet.p4();
+                if(ROOT::Math::VectorUtil::DeltaR(GenJetP4, CaloJetP4) < 0.2)
+                {GenJetCaloJetVec.push_back(std::make_pair(GenJet, CaloJet));}
             }
         }
     }
-    return SelectedCaloJets;
+    return GenJetCaloJetVec;
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------

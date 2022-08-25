@@ -45,6 +45,6 @@ process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
 )
 process.TFileService = cms.Service("TFileService", fileName = cms.string(OutputFile) )
-process.myAna = cms.EDAnalyzer("HCAL_Jet_Ana")
+process.myAna = cms.EDAnalyzer("HCAL_Jet_Ana", TightCut = cms.untracked.bool(False))
 
 process.path = cms.Path(process.myAna)
