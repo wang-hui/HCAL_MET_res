@@ -39,7 +39,8 @@ process.source = cms.Source(
 	#"file:results_temp/reco_data_RAW2DIGI_RECO.root" 
 	my_list
 	),
-    )
+    #firstEvent = cms.untracked.uint32(30)
+)
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)

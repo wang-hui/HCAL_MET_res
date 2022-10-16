@@ -819,6 +819,7 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                             {
                                 auto RecoE = CaloJetP4.E();
                                 //std::cout << "emEnergyFraction = " << CaloJet.emEnergyFraction() << ", energyFractionHadronic = " << CaloJet.energyFractionHadronic() << std::endl;
+                                //std::cout << CaloJet.energy() << ", " << CaloJet.eta() << ", " << CaloJet.phi() << std::endl;
                                 float EPull = 0;
                                 if(GenE + RecoE > 0) EPull = fabs(GenE - RecoE) / sqrt(GenE + RecoE);
                                 float ERatio = RecoE / GenE;

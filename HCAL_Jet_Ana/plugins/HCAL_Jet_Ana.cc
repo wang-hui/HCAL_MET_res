@@ -79,26 +79,31 @@ class HCAL_Jet_Ana : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
         bool TightCut_;
         TH1F * PU_h;
 
-        TTree * GenJetTree;
-        std::vector<math::XYZTLorentzVector> GenJetVec_p4;
-
         TTree * CaloJetTree;
+        std::vector<float> GenJetVec_Energy;
+        std::vector<float> GenJetVec_Eta;
+        std::vector<float> GenJetVec_Phi;
         std::vector<float> CaloJetVec_Energy;
+        std::vector<float> CaloJetVec_Eta;
+        std::vector<float> CaloJetVec_Phi;
+
         std::vector<int> CaloJetVec_CaloConstituentsVec_Index;
         std::vector<int> CaloJetVec_CaloConstituentsVec_Ieta;
         std::vector<int> CaloJetVec_CaloConstituentsVec_Iphi;
-        std::vector<math::XYZTLorentzVector> CaloJetVec_CaloConstituentsVec_p4;
+        std::vector<float> CaloJetVec_CaloConstituentsVec_Energy;
         std::vector<float> CaloJetVec_CaloConstituentsVec_EmEnergy;
         std::vector<float> CaloJetVec_CaloConstituentsVec_HadEnergy;
         std::vector<float> CaloJetVec_CaloConstituentsVec_HBEnergy;
         std::vector<float> CaloJetVec_CaloConstituentsVec_HEEnergy;
         std::vector<float> CaloJetVec_CaloConstituentsVec_HFEnergy;
         std::vector<float> CaloJetVec_CaloConstituentsVec_HOEnergy;
+
         std::vector<int> CaloJetVec_CaloConstituentsVec_HCALChannelVec_Index;
         std::vector<int> CaloJetVec_CaloConstituentsVec_HCALChannelVec_Ieta;
         std::vector<int> CaloJetVec_CaloConstituentsVec_HCALChannelVec_Iphi;
         std::vector<int> CaloJetVec_CaloConstituentsVec_HCALChannelVec_Depth;
         std::vector<float> CaloJetVec_CaloConstituentsVec_HCALChannelVec_Energy;
+        std::vector<float> CaloJetVec_CaloConstituentsVec_HCALChannelVec_AuxEnergy;
 };
 
 //
@@ -124,26 +129,31 @@ HCAL_Jet_Ana::HCAL_Jet_Ana(const edm::ParameterSet& iConfig):
     edm::Service<TFileService> TFS;
     PU_h = TFS->make<TH1F>("PU_h", "PU_h", 100, 0.0, 100.0);
 
-    GenJetTree = TFS->make<TTree>("GenJetTree", "GenJetTree");
-    GenJetTree->Branch("GenJetVec_p4", &GenJetVec_p4);
-
     CaloJetTree = TFS->make<TTree>("CaloJetTree", "CaloJetTree");
+    CaloJetTree->Branch("GenJetVec_Energy", &GenJetVec_Energy);
+    CaloJetTree->Branch("GenJetVec_Eta", &GenJetVec_Eta);
+    CaloJetTree->Branch("GenJetVec_Phi", &GenJetVec_Phi);
     CaloJetTree->Branch("CaloJetVec_Energy", &CaloJetVec_Energy);
+    CaloJetTree->Branch("CaloJetVec_Eta", &CaloJetVec_Eta);
+    CaloJetTree->Branch("CaloJetVec_Phi", &CaloJetVec_Phi);
+
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_Index", &CaloJetVec_CaloConstituentsVec_Index);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_Ieta", &CaloJetVec_CaloConstituentsVec_Ieta);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_Iphi", &CaloJetVec_CaloConstituentsVec_Iphi);
-    CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_p4", &CaloJetVec_CaloConstituentsVec_p4);
+    CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_Energy", &CaloJetVec_CaloConstituentsVec_Energy);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_EmEnergy", &CaloJetVec_CaloConstituentsVec_EmEnergy);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_HadEnergy", &CaloJetVec_CaloConstituentsVec_HadEnergy);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_HBEnergy", &CaloJetVec_CaloConstituentsVec_HBEnergy);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_HEEnergy", &CaloJetVec_CaloConstituentsVec_HEEnergy);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_HFEnergy", &CaloJetVec_CaloConstituentsVec_HFEnergy);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_HOEnergy", &CaloJetVec_CaloConstituentsVec_HOEnergy);
+
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_HCALChannelVec_Index", &CaloJetVec_CaloConstituentsVec_HCALChannelVec_Index);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_HCALChannelVec_Ieta", &CaloJetVec_CaloConstituentsVec_HCALChannelVec_Ieta);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_HCALChannelVec_Iphi", &CaloJetVec_CaloConstituentsVec_HCALChannelVec_Iphi);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_HCALChannelVec_Depth", &CaloJetVec_CaloConstituentsVec_HCALChannelVec_Depth);
     CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_HCALChannelVec_Energy", &CaloJetVec_CaloConstituentsVec_HCALChannelVec_Energy);
+    CaloJetTree->Branch("CaloJetVec_CaloConstituentsVec_HCALChannelVec_AuxEnergy", &CaloJetVec_CaloConstituentsVec_HCALChannelVec_AuxEnergy);
 }
 
 HCAL_Jet_Ana::~HCAL_Jet_Ana()
@@ -181,24 +191,30 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     iEvent.getByToken(CaloJetToken_, CaloJetHandle);
     auto CaloJets = CaloJetHandle.product();
 
-    GenJetVec_p4.clear();
-
+    GenJetVec_Energy.clear();
+    GenJetVec_Eta.clear();
+    GenJetVec_Phi.clear();
     CaloJetVec_Energy.clear();
+    CaloJetVec_Eta.clear();
+    CaloJetVec_Phi.clear();
+
     CaloJetVec_CaloConstituentsVec_Index.clear();
     CaloJetVec_CaloConstituentsVec_Ieta.clear();
     CaloJetVec_CaloConstituentsVec_Iphi.clear();
-    CaloJetVec_CaloConstituentsVec_p4.clear();
+    CaloJetVec_CaloConstituentsVec_Energy.clear();
     CaloJetVec_CaloConstituentsVec_EmEnergy.clear();
     CaloJetVec_CaloConstituentsVec_HadEnergy.clear();
     CaloJetVec_CaloConstituentsVec_HBEnergy.clear();
     CaloJetVec_CaloConstituentsVec_HEEnergy.clear();
     CaloJetVec_CaloConstituentsVec_HFEnergy.clear();
     CaloJetVec_CaloConstituentsVec_HOEnergy.clear();
+
     CaloJetVec_CaloConstituentsVec_HCALChannelVec_Index.clear();
     CaloJetVec_CaloConstituentsVec_HCALChannelVec_Ieta.clear();
     CaloJetVec_CaloConstituentsVec_HCALChannelVec_Iphi.clear();
     CaloJetVec_CaloConstituentsVec_HCALChannelVec_Depth.clear();
     CaloJetVec_CaloConstituentsVec_HCALChannelVec_Energy.clear();
+    CaloJetVec_CaloConstituentsVec_HCALChannelVec_AuxEnergy.clear();
 
     auto GenJetCaloJetVec = pair_gen_and_calo(GenJets, CaloJets);
     bool PassCut = false;
@@ -213,8 +229,15 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         {
             auto GenJet = GenJetCaloJet.first;
             auto CaloJet = GenJetCaloJet.second;
-            GenJetVec_p4.push_back(GenJet.p4());
+            GenJetVec_Energy.push_back(GenJet.energy());
+            GenJetVec_Eta.push_back(GenJet.eta());
+            GenJetVec_Phi.push_back(GenJet.phi());
             CaloJetVec_Energy.push_back(CaloJet.energy());
+            CaloJetVec_Eta.push_back(CaloJet.eta());
+            CaloJetVec_Phi.push_back(CaloJet.phi());
+
+            //std::cout << "CaloJet: " << CaloJet.energy() << ", " << CaloJet.eta() << ", " << CaloJet.phi() << std::endl;
+
             std::vector<CaloTowerPtr> CaloConsPtrs = CaloJet.getCaloConstituents();
             for (auto CaloConsPtr : CaloConsPtrs)
             {
@@ -223,13 +246,15 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                 CaloJetVec_CaloConstituentsVec_Index.push_back(CaloJetCounter);
                 CaloJetVec_CaloConstituentsVec_Ieta.push_back(CaloConsIeta);
                 CaloJetVec_CaloConstituentsVec_Iphi.push_back(CaloConsIphi);
-                CaloJetVec_CaloConstituentsVec_p4.push_back(CaloConsPtr->p4());
+                CaloJetVec_CaloConstituentsVec_Energy.push_back(CaloConsPtr->energy());
                 CaloJetVec_CaloConstituentsVec_EmEnergy.push_back(CaloConsPtr->emEnergy());
                 CaloJetVec_CaloConstituentsVec_HadEnergy.push_back(CaloConsPtr->hadEnergy());
                 CaloJetVec_CaloConstituentsVec_HBEnergy.push_back(CaloConsPtr->energyInHB());
                 CaloJetVec_CaloConstituentsVec_HEEnergy.push_back(CaloConsPtr->energyInHE());
                 CaloJetVec_CaloConstituentsVec_HFEnergy.push_back(CaloConsPtr->energyInHF());
                 CaloJetVec_CaloConstituentsVec_HOEnergy.push_back(CaloConsPtr->energyInHO());
+
+                //std::cout << "CaloCons: " << CaloConsIeta << ", " << CaloConsIphi << ", " << CaloConsPtr->hadEnergy() << ", " << CaloConsPtr->energyInHB() << std::endl;
 
                 for(auto HBHERecHit : *HBHERecHits)
                 {
@@ -238,6 +263,7 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                     auto Ieta = Hid.ieta();
                     auto Iphi = Hid.iphi();
                     auto Energy = HBHERecHit.energy();
+                    auto AuxEnergy = HBHERecHit.eaux();
 
                     if(Ieta == CaloConsIeta && Iphi == CaloConsIphi)
                     {
@@ -246,6 +272,9 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                         CaloJetVec_CaloConstituentsVec_HCALChannelVec_Iphi.push_back(Iphi);
                         CaloJetVec_CaloConstituentsVec_HCALChannelVec_Depth.push_back(Depth);
                         CaloJetVec_CaloConstituentsVec_HCALChannelVec_Energy.push_back(Energy);
+                        CaloJetVec_CaloConstituentsVec_HCALChannelVec_AuxEnergy.push_back(AuxEnergy);
+
+                        //std::cout << "Channel: " << Ieta << ", " << Iphi << ", " << Energy << std::endl;
                     }//match RecHits to CaloTower
                 }//loop RecHits
                 CaloConsCounter++;
@@ -253,7 +282,6 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             CaloJetCounter++;
         }//loop CaloJet
 
-        GenJetTree->Fill();
         CaloJetTree->Fill();
     }
 }
