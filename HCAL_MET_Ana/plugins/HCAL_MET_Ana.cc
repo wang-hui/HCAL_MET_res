@@ -450,9 +450,12 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         auto HT = calc_ht(*PFJets) - SelZ_pt;           //only consider the recoil HT
         HT_h->Fill(HT);
 
-        edm::ESHandle<CaloGeometry> CaloGeoHandle;
-        iSetup.get<CaloGeometryRecord>().get(CaloGeoHandle);
-        CaloGeometry CaloGeo = *CaloGeoHandle;
+        //edm::ESHandle<CaloGeometry> CaloGeoHandle;
+        //iSetup.get<CaloGeometryRecord>().get(CaloGeoHandle);
+        //CaloGeometry CaloGeo = *CaloGeoHandle;
+
+        auto tok_geom_ = esConsumes<CaloGeometry, CaloGeometryRecord>();
+        const CaloGeometry* CaloGeo = &iSetup.getData(tok_geom_);
 
         edm::Handle<CaloTowerCollection> CaloTowersHandle;
         iEvent.getByToken(CaloTowersToken_, CaloTowersHandle);
@@ -483,8 +486,8 @@ void HCAL_MET_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             auto Iphi = Hid.iphi();
             auto Energy = HBHERecHit.energy();
 
-            auto Eta = CaloGeo.getPosition(Hid).eta();
-            auto Phi = CaloGeo.getPosition(Hid).phi();
+            auto Eta = CaloGeo->getPosition(Hid).eta();
+            auto Phi = CaloGeo->getPosition(Hid).phi();
 
             auto Theta = 2 * TMath::ATan(exp(-1 * Eta));
             auto ET = Energy * TMath::Sin(Theta);
