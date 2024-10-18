@@ -236,7 +236,8 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             CaloJetVec_Eta.push_back(CaloJet.eta());
             CaloJetVec_Phi.push_back(CaloJet.phi());
 
-            //std::cout << "CaloJet: " << CaloJet.energy() << ", " << CaloJet.eta() << ", " << CaloJet.phi() << std::endl;
+            //std::cout << "\nCaloJet" << CaloJetCounter << ": " << CaloJet.eta() << ", " 
+            //          << CaloJet.phi() << ", " << CaloJet.energy() << std::endl;
 
             std::vector<CaloTowerPtr> CaloConsPtrs = CaloJet.getCaloConstituents();
             for (auto CaloConsPtr : CaloConsPtrs)
@@ -254,7 +255,10 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                 CaloJetVec_CaloConstituentsVec_HFEnergy.push_back(CaloConsPtr->energyInHF());
                 CaloJetVec_CaloConstituentsVec_HOEnergy.push_back(CaloConsPtr->energyInHO());
 
-                //std::cout << "CaloCons: " << CaloConsIeta << ", " << CaloConsIphi << ", " << CaloConsPtr->hadEnergy() << ", " << CaloConsPtr->energyInHB() << std::endl;
+                //std::cout << "CaloCons" << CaloConsCounter << ": " << CaloConsIeta << ", " << CaloConsIphi << ", " 
+                //          << CaloConsPtr->energy() << ", " << CaloConsPtr->hadEnergy() << ", " 
+                //          << CaloConsPtr->energyInHB() << ", " << CaloConsPtr->energyInHO() << ", " 
+                //          << CaloConsPtr->energyInHE() << ", " << CaloConsPtr->energyInHF() << std::endl;
 
                 for(auto HBHERecHit : *HBHERecHits)
                 {
@@ -274,7 +278,7 @@ void HCAL_Jet_Ana::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                         CaloJetVec_CaloConstituentsVec_HCALChannelVec_Energy.push_back(Energy);
                         CaloJetVec_CaloConstituentsVec_HCALChannelVec_AuxEnergy.push_back(AuxEnergy);
 
-                        //std::cout << "Channel: " << Ieta << ", " << Iphi << ", " << Energy << std::endl;
+                        //std::cout << "Channel: " << Ieta << ", " << Iphi << ", " << Depth << ", " << Energy << std::endl;
                     }//match RecHits to CaloTower
                 }//loop RecHits
                 CaloConsCounter++;
